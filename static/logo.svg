@@ -1,9 +1,4 @@
-<!-- Placeholder TrendAI mark (stylized red swirl). Replace this file with the
-     official Trend Micro / TrendAI logo SVG or PNG (keep the path /static/logo.svg,
-     or update the <img src> in index.html / passport.html). -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="TrendAI">
-  <g fill="none" stroke="#d71920" stroke-width="9" stroke-linecap="round">
-    <path d="M49 18 A21 21 0 1 0 53 40" />
-  </g>
-  <circle cx="46" cy="15" r="6.5" fill="#d71920" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="TrendAI Vision One">
+  <title>TrendAI Vision One</title>
+  <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAI9SURBVHgBzVVNbhMxGH12KypWZEkKC3eD1GbB5AQ0JyCcgPQE5AYpJ6CcoOEG9ASZGyRsOrDKIPG3zAoaoDHv84xnMsmEuKqQeJKlkcd+7/t5toF/DIVbYGpM4+o3InuNSCk0rMVM7WBy+CmNgwQu90336Ev6to74+y8YZTkWmMmcVeiS7Ck/DUcKi5PDb2m8USC5bwyjGu/t4eAgTWcIwJjCd39ixEwiN2HR0diQOnMbWaAxn+McgWgzkB930GE2WUAKA11HTtIRslQZBLrJvhkgECLCslxk/IgqAlIWISdpVNllcUqRc/mPG0AqUAhcNk2fktM18nJ1T8pGkR62E9/LM5gUAkdf0zPpPMQB9fDOGGILVN7kBfBxzUWuDKrsgY+EbuqEuCl5aI5x7fZLKie68oNghBJp6QRGHkqOLOznfp9k6wSSB6wrVZOmGYmLnAhcuZyXQ8kdj/Qq2/ey/NE0Uw4r433TvCrmAxq6tNZ4ng90nJ9XlZrl2NFoP/qcTkLJ/dnJHehKnFcBeqlmHvEtyLHQeObJnYBaP1RvEIhVcnFNayU4XVxMJVIEQEp7Ncd4mbzujOyuTmiNBrZHPeAb0He8tDNHp7WhrHo1Ymb0ZBOx2DCPup9Px3wP2q2/9EzxDjpjH15UZzEkyYXSPGzZo/J4odDjFdDwUXPuNUtyii1Q4l+rMfabAxDn9U5DFru7SJ5GCsgBM3WL3LVBd+1qDG9i4UJAkN/1xySTB9xdt+zHOwpP5G3F/4o/WKUYn+48WdcAAAAASUVORK5CYII=" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
 </svg>
