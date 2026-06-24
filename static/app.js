@@ -1,5 +1,11 @@
 // TrendAI Vision One AI Security Challenge — booth frontend
-const state = { meta: null, challenges: [], pid: null, me: null, active: null, lbWindow: "event" };
+const state = { meta: null, challenges: [], pid: null, me: null, active: null, lbWindow: "event", attempts: {} };
+
+// Advanced hint mode (staff-toggled): hide obvious starter hints; reveal a single
+// limited hint only after this many attempts on a challenge.
+const ADV_HINT_AFTER = 3;
+const advMode = () => state.meta && state.meta.hint_mode === "advanced";
+const attemptsFor = (id) => state.attempts[id] || 0;
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, props = {}, html = "") => {
@@ -201,15 +207,44 @@ function openPanel(c) {
   })[c.id]();
 }
 
-function starters(list, onPick) {
-  if (!list.length) return "";
-  const wrap = el("div", { className: "row", style: "margin:8px 0" });
-  list.forEach((s) => {
-    const b = el("span", { className: "starter" }, esc(s));
-    b.onclick = () => onPick(s);
-    wrap.appendChild(b);
-  });
+// Hint slot for a challenge panel. Beginner mode shows the obvious starter chips
+// (clickable to fill the input). Advanced mode hides them and reveals a single
+// limited hint only after ADV_HINT_AFTER attempts. `onPick` is optional (only the
+// chat-style stations fill an input from a hint).
+function hintSlot(c, onPick) {
+  const wrap = el("div", { id: "hintSlot", className: "row", style: "margin:8px 0" });
+  wrap._c = c; wrap._onPick = onPick;
+  paintHintSlot(wrap);
   return wrap;
+}
+function paintHintSlot(wrap) {
+  if (!wrap) return;
+  const c = wrap._c, onPick = wrap._onPick;
+  wrap.innerHTML = "";
+  if (!advMode()) {
+    (c.starters || []).forEach((s) => {
+      const b = el("span", { className: "starter" }, esc(s));
+      if (onPick) b.onclick = () => onPick(s);
+      wrap.appendChild(b);
+    });
+    return;
+  }
+  // Advanced mode — limited hints, gated behind attempts.
+  const left = ADV_HINT_AFTER - attemptsFor(c.id);
+  if (left > 0) {
+    wrap.appendChild(el("span", { className: "muted", style: "font-size:12px" },
+      `🔒 Advanced mode — a hint unlocks after ${left} more attempt${left === 1 ? "" : "s"}.`));
+  } else if (c.adv_hint) {
+    const h = el("span", { className: "starter", title: "Advanced hint" }, "💡 " + esc(c.adv_hint));
+    if (onPick && (c.starters || []).length) h.onclick = () => onPick(c.adv_hint);
+    wrap.appendChild(h);
+  }
+}
+// Count an attempt for the active challenge and repaint its hint slot (so the
+// advanced-mode hint can unlock at the threshold).
+function noteAttempt(c) {
+  state.attempts[c.id] = attemptsFor(c.id) + 1;
+  paintHintSlot($("#hintSlot"));
 }
 
 function banner(kind, html) { return `<div class="banner ${kind}">${html}</div>`; }
@@ -231,7 +266,7 @@ function renderBreakTheBot() {
       <button class="ghost" id="vote">Crowd-favorite vote (+10)</button></div>
     <div id="bbResult"></div>`;
   const sb = $("#startersBox");
-  sb.appendChild(starters(state.active.starters, (s) => { $("#msg").value = s; }));
+  sb.appendChild(hintSlot(state.active, (s) => { $("#msg").value = s; }));
   $("#send").onclick = sendBB;
   $("#vote").onclick = async () => { await api("/api/challenges/break-the-bot/vote", { player_id: state.pid }); await refreshMe(); refreshSidebar(); };
 }
@@ -243,6 +278,7 @@ function pushChat(role, text) {
 async function sendBB() {
   const msg = $("#msg").value.trim(); if (!msg) return;
   const guard = $("#grd").checked;
+  noteAttempt(state.active);
   pushChat("user", msg); $("#msg").value = "";
   try {
     const r = await api("/api/challenges/break-the-bot/chat",
@@ -268,9 +304,10 @@ function renderStopTheLeak() {
     <textarea id="msg2" placeholder="Ask the app to dump the customer file or config…"></textarea>
     <div class="row"><button id="send2">Send</button></div>
     <div id="slResult"></div>`;
-  $("#startersBox2").appendChild(starters(state.active.starters, (s) => { $("#msg2").value = s; }));
+  $("#startersBox2").appendChild(hintSlot(state.active, (s) => { $("#msg2").value = s; }));
   $("#send2").onclick = async () => {
     const msg = $("#msg2").value.trim(); if (!msg) return;
+    noteAttempt(state.active);
     const r = await api("/api/challenges/stop-the-leak/chat", { player_id: state.pid, message: msg });
     let html = `<h3>App response (after AI Guard)</h3><pre>${esc(r.redacted)}</pre>`;
     if (r.cleared) {
@@ -299,9 +336,12 @@ async function renderFindTheFlaw() {
     <div class="row" style="margin-top:8px">
       <input id="owaspAns" placeholder="e.g. prompt injection / LLM01" style="flex:1" />
       <button id="ansBtn">Submit for top finding</button></div>
+    <div id="hintBox"></div>
     <div id="ffResult"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   $("#ansBtn").onclick = async () => {
     const ans = $("#owaspAns").value.trim(); if (!ans) return;
+    noteAttempt(state.active);
     const r = await api("/api/challenges/find-the-flaw/answer",
       { player_id: state.pid, finding_id: top.id, answer: ans });
     $("#ffResult").innerHTML = banner(r.correct ? "good" : "bad", esc(r.message) + (r.cleared ? " Station cleared!" : ""));
@@ -335,8 +375,11 @@ async function renderTracePoison() {
       <select id="tpApp"><option value="">Pick affected downstream app…</option>
         ${r.apps.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("")}</select>
       <button id="tpBtn">Submit trace</button></div>
+    <div id="hintBox"></div>
     <div id="tpRes"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   $("#tpBtn").onclick = async () => {
+    noteAttempt(state.active);
     const res = await api("/api/challenges/trace-the-poison/answer", {
       player_id: state.pid, secret: $("#tpSecret").value,
       dependency: $("#tpDep").value, downstream_app: $("#tpApp").value,
@@ -372,12 +415,16 @@ async function renderShadowAI() {
       <select id="toolSel">${d.tools.filter((t) => !t.sanctioned).map((t) => `<option value="${t.id}">${esc(t.name)} (${t.risk})</option>`).join("")}</select>
       <select id="actSel"><option value="block">Block</option><option value="coach">Coach</option></select>
       <button id="polBtn">Apply policy &amp; replay</button></div>
+    <div id="hintBox"></div>
     <div id="polRes"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   $("#cntBtn").onclick = async () => {
+    noteAttempt(state.active);
     const r = await api("/api/challenges/shadow-ai/count", { player_id: state.pid, count: Number($("#cnt").value || 0) });
     $("#cntRes").innerHTML = banner(r.correct ? "good" : "bad", esc(r.message));
   };
   $("#polBtn").onclick = async () => {
+    noteAttempt(state.active);
     const r = await api("/api/challenges/shadow-ai/policy",
       { player_id: state.pid, tool_id: $("#toolSel").value, action: $("#actSel").value });
     $("#polRes").innerHTML = banner(r.cleared ? "good" : "bad", esc(r.message) + (r.cleared ? " Station cleared!" : ""));
@@ -396,8 +443,11 @@ async function renderTameTheAgent() {
     <div class="toggle"><label><input type="checkbox" id="polOn" checked /> Governance policy ENABLED</label>
       <span class="muted" style="font-size:12px">Staff: toggle OFF to show what happens without governance.</span></div>
     <div class="row"><button id="runAgent">Run agent task</button></div>
+    <div id="hintBox"></div>
     <div id="agentRes"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   $("#runAgent").onclick = async () => {
+    noteAttempt(state.active);
     const r = await api("/api/challenges/tame-the-agent/run",
       { player_id: state.pid, policy_enabled: $("#polOn").checked });
     const trail = r.trail.map((s) => `<div class="toolcall ${s.decision}">
@@ -423,9 +473,12 @@ async function renderWatchMcpWire() {
     <p class="muted">Every agent-to-tool call flows through the gateway. Spot the call reaching
       outside its approved scope or hitting an unapproved server, then block it.</p>
     <div id="mcpCalls">${rows}</div>
+    <div id="hintBox"></div>
     <div id="mcpRes"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   body.querySelectorAll("button[data-call]").forEach((btn) => {
     btn.onclick = async () => {
+      noteAttempt(state.active);
       const res = await api("/api/challenges/watch-mcp-wire/block",
         { player_id: state.pid, call_id: btn.dataset.call });
       const box = $("#mc-" + btn.dataset.call);
@@ -447,7 +500,9 @@ async function renderBossLevel() {
     <div class="timer" id="bossTimer">3:00</div>
     <div class="loop-steps" id="loopSteps"></div>
     <div class="row" style="margin-top:8px"><button class="ghost" id="bossReset">Reset run</button></div>
+    <div id="hintBox"></div>
     <div id="bossRes"></div>`;
+  $("#hintBox").appendChild(hintSlot(state.active));
   const steps = ["scan", "protect", "validate", "improve"];
   const wrap = $("#loopSteps");
   steps.forEach((s) => {
@@ -463,6 +518,7 @@ async function renderBossLevel() {
   };
 }
 async function bossStep(step) {
+  noteAttempt(state.active);
   const r = await api("/api/challenges/boss-level/step", { player_id: state.pid, step });
   r.done.forEach((s) => $("#ls-" + s) && $("#ls-" + s).classList.add("done"));
   startBossTimer(r.remaining_seconds);

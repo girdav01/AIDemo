@@ -125,6 +125,9 @@ def meta():
         "app_title": config.APP_TITLE,
         "product": config.PRODUCT_NAME,
         "event": store.get_setting("event_name", config.EVENT_NAME),
+        # "beginner" (obvious starter hints) or "advanced" (limited hints, gated
+        # behind 3 attempts per challenge). Toggled by staff in /admin.
+        "hint_mode": store.get_setting("hint_mode", "beginner"),
         "base_url": config.BOOTH_URL,   # used for e-passport QR (avoids localhost)
         "live_bot": config.LIVE_BOT_ENABLED,
         "model": config.ANTHROPIC_MODEL if config.LIVE_BOT_ENABLED else "offline-bot",
@@ -217,7 +220,12 @@ def leaderboard_new_event(_: str = Depends(require_staff)):
 @app.get("/api/staff/me")
 def staff_me(user: str = Depends(require_staff)):
     """Verify staff credentials (used by the /admin login)."""
-    return {"ok": True, "user": user, "event_name": store.get_setting("event_name", config.EVENT_NAME)}
+    return {
+        "ok": True,
+        "user": user,
+        "event_name": store.get_setting("event_name", config.EVENT_NAME),
+        "hint_mode": store.get_setting("hint_mode", "beginner"),
+    }
 
 
 class EventNameBody(BaseModel):
@@ -230,6 +238,23 @@ def set_event_name(body: EventNameBody, _: str = Depends(require_staff)):
     name = body.event_name.strip()[:120] or config.EVENT_NAME
     store.set_setting("event_name", name)
     return {"ok": True, "event_name": name, "message": "Event name updated."}
+
+
+class HintModeBody(BaseModel):
+    hint_mode: str  # "beginner" | "advanced"
+
+
+@app.post("/api/admin/hint-mode")
+def set_hint_mode(body: HintModeBody, _: str = Depends(require_staff)):
+    """Switch hint difficulty (persisted). Advanced mode hides the obvious starter
+    hints and only reveals a single limited hint after 3 attempts per challenge."""
+    mode = body.hint_mode.strip().lower()
+    if mode not in ("beginner", "advanced"):
+        raise HTTPException(400, "hint_mode must be 'beginner' or 'advanced'.")
+    store.set_setting("hint_mode", mode)
+    label = "Advanced" if mode == "advanced" else "Beginner"
+    return {"ok": True, "hint_mode": mode,
+            "message": f"{label} hint mode is now active."}
 
 
 @app.get("/api/qr")
