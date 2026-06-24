@@ -123,6 +123,46 @@ def list_challenges():
     return {"challenges": challenges.CHALLENGES}
 
 
+def _load_banners():
+    """Read the title-bar marketing messages from static/banners.yml (live, so
+    staff can edit it without a restart). Uses PyYAML if present, else a small
+    fallback parser so the booth never depends on it."""
+    default = {"interval_seconds": 7, "messages": []}
+    try:
+        text = open(STATIC_DIR + "/banners.yml", encoding="utf-8").read()
+    except OSError:
+        return default
+    try:
+        import yaml
+
+        data = yaml.safe_load(text) or {}
+        if isinstance(data, list):
+            return {"interval_seconds": 7, "messages": [str(x) for x in data if str(x).strip()]}
+        msgs = [str(m) for m in (data.get("messages") or []) if str(m).strip()]
+        return {"interval_seconds": int(data.get("interval_seconds", 7)), "messages": msgs}
+    except Exception:
+        msgs, interval = [], 7
+        for line in text.splitlines():
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            if s.startswith("- "):
+                v = s[2:].strip().strip('"').strip("'")
+                if v:
+                    msgs.append(v)
+            elif s.lower().startswith("interval_seconds:"):
+                try:
+                    interval = int(s.split(":", 1)[1].strip())
+                except ValueError:
+                    pass
+        return {"interval_seconds": interval, "messages": msgs}
+
+
+@app.get("/api/banners")
+def banners():
+    return _load_banners()
+
+
 @app.post("/api/passport")
 def create_passport(body: CreatePassport):
     # If an AI4 badge ID is given and already known, resume that passport

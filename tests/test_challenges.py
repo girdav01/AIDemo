@@ -195,6 +195,13 @@ def test_leaderboard_windows():
     assert client.get("/api/leaderboard", params={"window": "event"}).json()["leaderboard"] == []
 
 
+def test_banners_endpoint():
+    b = client.get("/api/banners").json()
+    assert isinstance(b["messages"], list) and len(b["messages"]) >= 1
+    assert b["interval_seconds"] >= 1
+    assert any("Red Teaming" in m for m in b["messages"])
+
+
 def test_human_verified_recorded():
     store.reset_tenant()
     p = client.post("/api/passport", json={"name": "HumanA", "human_verified": True}).json()
