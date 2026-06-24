@@ -89,9 +89,32 @@ can earn a real bypass.
 - **Full passport = one challenge cleared in each pillar** (Visibility, Control,
   Governance) → **+100 bonus**, premium swag, grand-prize draw. Extra stations and
   Boss Level score bonus points.
+- **Windowed boards:** the leaderboard can show **This hour**, **Today**, or the
+  running **Event** (all-conference) board — tabs on both the in-app sidebar and
+  `/screen` (`?board=hour|day|event`). Points are recorded in a timestamped ledger
+  and aggregated per window; clock windows use the server's local time, so set the
+  booth machine to America/Los_Angeles.
+- `POST /api/leaderboard/new-day` starts a fresh **daily** window (keeps the event
+  board); `POST /api/leaderboard/new-event` starts a fresh **all-conference** board.
 - Daily leaderboard top 3 → headline prize.
 - Boss-Level finishers → "AI Fearlessly" challenge coin + a Companion-generated
   incident summary of their Break-the-Bot attack.
+
+### Player identity, staff awards, persistence
+
+- **AI4 badge ID (optional).** At registration an attendee can add their badge ID
+  (type it, or a USB/camera scanner types it into the field). The badge is a
+  **stable identity**: scanning it again — on another device or a return visit —
+  resumes the same passport instead of creating a duplicate. Badge IDs are stored
+  to identify players and are **never shown on the public leaderboard**.
+- **Unique screen names.** Without a badge, screen names must be unique (a badge
+  disambiguates, so the same name is allowed alongside one). `"Anonymous"` is exempt.
+- **Staff-awarded clears.** `/staff` is a station-tablet view: scan the attendee's
+  e-passport QR (or enter their player/badge id), pick the station, and mark it
+  cleared — handy when the staffer drives the win instead of the attendee's phone.
+- **Persistence.** Set `BOOTH_PERSIST=1` (default in `run.sh`) to write passports +
+  the points ledger to SQLite (`BOOTH_DB`, default `booth_state.db`), so a restart
+  doesn't wipe the board. Off by default in dev/tests (pure in-memory).
 
 ---
 
@@ -164,7 +187,8 @@ app/
 static/
   index.html app.js styles.css   attendee + staff UI
   passport.html passport.js      electronic passport (mobile wallet)
-  screen.html                    big-screen leaderboard + attractor video
+  screen.html                    big-screen leaderboard (hour/day/event) + video
+  staff.html                     station-tablet staff-award view
 tools/
   generate_pdfs.py               station cards + booth poster PDFs
   generate_screen_deck.py        booth big-screen deck (.pptx, 8 challenges)

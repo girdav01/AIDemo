@@ -29,6 +29,7 @@
         <h2>🎫 Challenge Passport</h2>
         <div class="passport-bar" id="passportBar">
           <input id="nameInput" placeholder="Pick a screen name" maxlength="40" />
+          <input id="badgeInput" placeholder="AI4 badge ID (optional — scan or type)" maxlength="64" />
           <button id="startBtn">Start passport</button>
           <span class="muted">Clear one challenge in each pillar (Visibility · Control · Governance) to enter the draw.</span>
         </div>
@@ -59,6 +60,11 @@
     <aside>
       <div class="card">
         <h2>🏆 Leaderboard</h2>
+        <div class="row" id="lbTabs" style="margin-bottom:8px">
+          <button class="ghost lbtab" data-w="hour">This hour</button>
+          <button class="ghost lbtab" data-w="day">Today</button>
+          <button class="lbtab" data-w="event">Event</button>
+        </div>
         <div class="lb" id="leaderboard"><div class="muted">No players yet.</div></div>
         <div class="row" style="margin-top:10px">
           <a href="/screen" target="_blank">Open big-screen view ↗</a>

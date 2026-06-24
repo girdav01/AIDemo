@@ -36,6 +36,7 @@ STATIC_DIR = __file__.rsplit("/", 2)[0] + "/static"
 # --------------------------------------------------------------------------- #
 class CreatePassport(BaseModel):
     name: str = "Anonymous"
+    badge_id: str = ""
 
 
 class ChatBody(BaseModel):
@@ -60,6 +61,11 @@ class TracePoisonBody(BaseModel):
 class McpBlockBody(BaseModel):
     player_id: str
     call_id: str
+
+
+class StaffAward(BaseModel):
+    target: str          # player_id, personal-QR URL, 'badge:<id>', or badge id
+    challenge_id: str
 
 
 class CountBody(BaseModel):
@@ -118,7 +124,12 @@ def list_challenges():
 
 @app.post("/api/passport")
 def create_passport(body: CreatePassport):
-    return store.create_passport(body.name)
+    # If an AI4 badge ID is given and already known, resume that passport
+    # (same player across devices / a returning attendee) instead of duplicating.
+    try:
+        return store.create_passport(body.name, body.badge_id)
+    except store.NameTakenError as e:
+        raise HTTPException(409, str(e))
 
 
 @app.get("/api/passport/{pid}")
@@ -127,8 +138,21 @@ def get_passport(pid: str):
 
 
 @app.get("/api/leaderboard")
-def leaderboard():
-    return {"leaderboard": store.leaderboard()}
+def leaderboard(window: str = "event"):
+    """window = hour | day | event (the running all-conference board)."""
+    return {"window": window, "leaderboard": store.leaderboard(window)}
+
+
+@app.post("/api/leaderboard/new-day")
+def leaderboard_new_day():
+    store.new_day()
+    return {"ok": True, "message": "New daily leaderboard window started."}
+
+
+@app.post("/api/leaderboard/new-event")
+def leaderboard_new_event():
+    store.new_event()
+    return {"ok": True, "message": "Fresh all-conference board started."}
 
 
 @app.get("/api/qr")
@@ -152,6 +176,47 @@ def events(challenge: Optional[str] = None):
 def reset_tenant():
     store.reset_tenant()
     return {"ok": True, "message": "Demo tenant reset. AI Guard is ON."}
+
+
+def _resolve_target(target: str):
+    """Resolve a staff 'target' to a player_id. Accepts a raw player_id, a
+    personal-QR URL (…/?p=<id>), 'badge:<id>', or a bare AI4 badge id."""
+    from urllib.parse import urlparse, parse_qs
+
+    t = (target or "").strip()
+    if "p=" in t and ("/" in t or "?" in t):
+        q = parse_qs(urlparse(t).query)
+        if q.get("p"):
+            t = q["p"][0]
+    if t.startswith("badge:"):
+        p = store.get_by_badge(t[6:])
+        return p["id"] if p else None
+    if store.get_passport(t):
+        return t
+    p = store.get_by_badge(t)
+    return p["id"] if p else None
+
+
+@app.post("/api/staff/award")
+def staff_award(body: StaffAward):
+    """Staff-driven clear: award a challenge from a station tablet by scanning the
+    attendee's personal QR or entering their player/badge id."""
+    pid = _resolve_target(body.target)
+    if not pid:
+        raise HTTPException(404, "Player not found. Scan their e-passport QR or "
+                            "enter their player/badge id.")
+    if body.challenge_id not in challenges.CHALLENGES_BY_ID:
+        raise HTTPException(400, "Unknown challenge id.")
+    p = store.award(pid, body.challenge_id)
+    store.add_event(body.challenge_id, "info", f"Staff-awarded clear for {p['name']}.")
+    return {
+        "ok": True,
+        "challenge": body.challenge_id,
+        "player": {
+            "name": p["name"], "points": p["points"],
+            "stamps": len(p["stamps"]), "completed": p["completed"],
+        },
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -497,3 +562,9 @@ def screen():
 def passport_page():
     """Mobile electronic-passport wallet (replaces the paper passport)."""
     return FileResponse(STATIC_DIR + "/passport.html")
+
+
+@app.get("/staff")
+def staff_page():
+    """Station tablet view: staff-award a clear by scanning the attendee's QR."""
+    return FileResponse(STATIC_DIR + "/staff.html")

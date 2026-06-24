@@ -1,5 +1,5 @@
 // TrendAI Vision One AI Security Challenge — booth frontend
-const state = { meta: null, challenges: [], pid: null, me: null, active: null };
+const state = { meta: null, challenges: [], pid: null, me: null, active: null, lbWindow: "event" };
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, props = {}, html = "") => {
@@ -30,6 +30,14 @@ async function init() {
   $("#botmode").textContent = "Bot: " + (state.meta.live_bot ? "live " + state.meta.model : "offline (deterministic)");
   renderStations();
   restorePlayer();
+  document.querySelectorAll(".lbtab").forEach((b) => {
+    b.onclick = () => {
+      state.lbWindow = b.dataset.w;
+      document.querySelectorAll(".lbtab").forEach((x) => x.classList.add("ghost"));
+      b.classList.remove("ghost");
+      refreshSidebar();
+    };
+  });
   refreshSidebar();
   setInterval(refreshSidebar, 5000);
 }
@@ -45,8 +53,13 @@ function restorePlayer() {
 
 $("#startBtn").onclick = async () => {
   const name = $("#nameInput").value.trim() || "Anonymous";
-  const p = await api("/api/passport", { name });
-  setPlayer(p);
+  const badge_id = $("#badgeInput").value.trim();
+  try {
+    const p = await api("/api/passport", { name, badge_id });
+    setPlayer(p);
+  } catch (e) {
+    alert(e.message); // e.g. screen name taken — pick another or add your badge ID
+  }
 };
 $("#newBtn").onclick = () => { localStorage.removeItem("v1_pid"); state.pid = null; state.me = null; location.reload(); };
 $("#resetBtn").onclick = async () => {
@@ -424,7 +437,7 @@ function startBossTimer(remaining) {
 // ---------- sidebar ----------
 async function refreshSidebar() {
   try {
-    const lb = (await api("/api/leaderboard")).leaderboard;
+    const lb = (await api("/api/leaderboard?window=" + state.lbWindow)).leaderboard;
     $("#leaderboard").innerHTML = lb.length
       ? lb.map((p) => `<div class="r"><span class="nm">#${p.rank} ${esc(p.name)}
           ${p.completed ? '<span class="full">✓</span>' : ""}</span>
