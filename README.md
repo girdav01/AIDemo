@@ -167,6 +167,7 @@ static/
   screen.html                    big-screen leaderboard + attractor video
 tools/
   generate_pdfs.py               station cards + booth poster PDFs
+  generate_screen_deck.py        booth big-screen deck (.pptx, 8 challenges)
 docs/
   vision-one-setup/              per-challenge Vision One build instructions
 video/                           booth video assets (Malicious Skill attractor)
