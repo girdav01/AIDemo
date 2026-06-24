@@ -48,7 +48,12 @@
     </div>
     <div class="cols">
       <div class="card big-lb">
-        <h2>🏆 Live Leaderboard</h2>
+        <h2>🏆 Live Leaderboard · <span id="lbLabel">Event</span></h2>
+        <div class="row" id="lbTabs" style="margin-bottom:10px;gap:8px">
+          <button class="ghost lbtab" data-w="hour">This hour</button>
+          <button class="ghost lbtab" data-w="day">Today</button>
+          <button class="lbtab" data-w="event">Event</button>
+        </div>
         <div id="lb"><div class="muted">Waiting for players…</div></div>
       </div>
       <div class="card how">
@@ -125,9 +130,19 @@
       setInterval(() => { showing = !showing; showVideo(showing); }, showing ? 45000 : 30000);
     }
 
+    let lbWindow = params.get("board") || "event";
+    const LABELS = { hour: "This hour", day: "Today", event: "Event" };
+    function setTab(w) {
+      lbWindow = w;
+      document.getElementById("lbLabel").textContent = LABELS[w] || "Event";
+      document.querySelectorAll(".lbtab").forEach((x) => x.classList.toggle("ghost", x.dataset.w !== w));
+      tick();
+    }
+    document.querySelectorAll(".lbtab").forEach((b) => { b.onclick = () => setTab(b.dataset.w); });
+
     async function tick() {
       try {
-        const r = await fetch("/api/leaderboard"); const { leaderboard } = await r.json();
+        const r = await fetch("/api/leaderboard?window=" + lbWindow); const { leaderboard } = await r.json();
         const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
         document.getElementById("lb").innerHTML = leaderboard.length
           ? leaderboard.slice(0, 10).map(p => `<div class="r"><span class="nm">
@@ -136,7 +151,7 @@
           : '<div class="muted">Waiting for players…</div>';
       } catch (e) {}
     }
-    tick(); setInterval(tick, 3000);
+    setTab(lbWindow); setInterval(tick, 3000);
   </script>
 </body>
 </html>

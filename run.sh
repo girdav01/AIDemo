@@ -8,6 +8,10 @@ if [ -f .env ]; then set -a; . ./.env; set +a; fi
 HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-8000}"
 
+# Persist passports + leaderboard to SQLite so a restart doesn't wipe the board.
+export BOOTH_PERSIST="${BOOTH_PERSIST:-1}"
+export BOOTH_DB="${BOOTH_DB:-booth_state.db}"
+
 if ! python3 -c "import fastapi" >/dev/null 2>&1; then
   echo "Installing dependencies…"
   python3 -m pip install -r requirements.txt
