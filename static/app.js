@@ -26,7 +26,7 @@ async function api(path, body) {
 async function init() {
   state.meta = await api("/api/meta");
   state.challenges = (await api("/api/challenges")).challenges;
-  $("#event").textContent = state.meta.product + " · " + state.meta.event;
+  $("#event").textContent = "AI Security Challenge · " + state.meta.event;
   $("#botmode").textContent = "Bot: " + (state.meta.live_bot ? "live " + state.meta.model : "offline (deterministic)");
   renderStations();
   restorePlayer();

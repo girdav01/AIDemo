@@ -29,10 +29,11 @@ header.app {
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand .logo {
   width: 40px; height: 40px; border-radius: 9px;
-  background: var(--trend-red); display: grid; place-items: center;
-  font-weight: 800; color: #fff; font-size: 20px;
+  background: #0b0b0d; border: 1px solid var(--line);
+  display: grid; place-items: center;
 }
-.brand h1 { font-size: 18px; margin: 0; }
+.brand .logo img { width: 28px; height: 28px; display: block; }
+.brand h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
 .brand .sub { color: var(--muted); font-size: 12px; }
 .taglines { color: var(--muted); font-size: 12px; text-align: right; }
 .taglines b { color: var(--trend-red); }

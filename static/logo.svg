@@ -1,0 +1,9 @@
+<!-- Placeholder TrendAI mark (stylized red swirl). Replace this file with the
+     official Trend Micro / TrendAI logo SVG or PNG (keep the path /static/logo.svg,
+     or update the <img src> in index.html / passport.html). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="TrendAI">
+  <g fill="none" stroke="#d71920" stroke-width="9" stroke-linecap="round">
+    <path d="M49 18 A21 21 0 1 0 53 40" />
+  </g>
+  <circle cx="46" cy="15" r="6.5" fill="#d71920" />
+</svg>
