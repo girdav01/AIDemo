@@ -159,6 +159,19 @@ Station cards stay **physical** (handy at each station); the passport does not.
 - All stations are pre-loaded (scan results, agent runs, discovery view) for zero
   wait time.
 
+## Rolling marketing banner
+
+The title bar shows a rotating marketing message, fed by **`static/banners.yml`**
+(served live via `GET /api/banners` — edit the file and it updates without a
+restart). Set the rotation speed and messages:
+
+```yaml
+interval_seconds: 7
+messages:
+  - "Did you know that TrendAI offers AI Red Teaming Services? ..."
+  - "If you want to control and govern your Agentic AI, ask for our ..."
+```
+
 ## Vision One build instructions
 
 `docs/vision-one-setup/` documents **what to provision on the Vision One side**

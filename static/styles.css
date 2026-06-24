@@ -37,6 +37,19 @@ header.app {
 .brand .sub { color: var(--muted); font-size: 12px; }
 .taglines { color: var(--muted); font-size: 12px; text-align: right; }
 .taglines b { color: var(--trend-red); }
+.marquee {
+  flex: 1; min-width: 0; margin: 0 24px; overflow: hidden; text-align: center;
+}
+.marquee span {
+  display: inline-block; max-width: 100%; color: var(--text); font-size: 13px;
+  font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  vertical-align: middle; opacity: 0; transition: opacity .45s ease;
+}
+.marquee span.show { opacity: 1; }
+.marquee::before {
+  content: "📣"; margin-right: 8px; vertical-align: middle; opacity: .8;
+}
+@media (max-width: 900px) { .marquee { display: none; } }
 
 .wrap { display: grid; grid-template-columns: 1fr 340px; gap: 20px; padding: 22px 28px; }
 @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } }

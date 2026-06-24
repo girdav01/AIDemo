@@ -30,6 +30,7 @@ async function init() {
   $("#botmode").textContent = "Bot: " + (state.meta.live_bot ? "live " + state.meta.model : "offline (deterministic)");
   renderStations();
   renderHumanCheck();
+  initMarquee();
   restorePlayer();
   document.querySelectorAll(".lbtab").forEach((b) => {
     b.onclick = () => {
@@ -50,6 +51,25 @@ function restorePlayer() {
   if (saved) {
     api("/api/passport/" + saved).then((p) => { setPlayer(p); }).catch(() => localStorage.removeItem("v1_pid"));
   }
+}
+
+// Rolling marketing banner in the title bar, fed by static/banners.yml.
+async function initMarquee() {
+  const span = $("#marqueeText");
+  if (!span) return;
+  let cfg = { interval_seconds: 7, messages: [] };
+  try { cfg = await api("/api/banners"); } catch (e) { /* leave empty */ }
+  const msgs = (cfg.messages || []).filter(Boolean);
+  if (!msgs.length) { $("#marquee").style.display = "none"; return; }
+  const interval = Math.max(3, cfg.interval_seconds || 7) * 1000;
+  let i = 0;
+  const show = () => {
+    span.classList.remove("show");
+    setTimeout(() => { span.textContent = msgs[i % msgs.length]; span.classList.add("show"); }, 450);
+    i++;
+  };
+  show();
+  if (msgs.length > 1) setInterval(show, interval);
 }
 
 // On-theme human verification — tap the human emoji. Booth gate, not security.

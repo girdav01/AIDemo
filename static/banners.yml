@@ -1,0 +1,11 @@
+# Rolling marketing messages for the title-bar banner.
+# Edit this file and the banner updates live (no restart needed).
+#
+#   interval_seconds: how long each message shows before rotating
+#   messages:         the rotation, in order
+
+interval_seconds: 7
+messages:
+  - "Did you know that TrendAI offers AI Red Teaming Services? Contact us for more details."
+  - "If you want to control and govern your Agentic AI, ask for our Agentic Governance Gateway."
+  - "AI Factory EDR runs on NVIDIA BlueField DPU and therefore does not impact GPU performance — ask us about it."
