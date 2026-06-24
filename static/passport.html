@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>My e-Passport · Vision One AI Security Challenge</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .wallet { max-width: 460px; margin: 0 auto; padding: 18px; }
+    .wallet .card { margin-bottom: 16px; }
+    .ptsbig { font-size: 40px; font-weight: 800; color: var(--gold); }
+    .stamps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .st { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px 8px; text-align: center; opacity: .45; }
+    .st.on { opacity: 1; border-color: var(--good); }
+    .st .ic { font-size: 24px; }
+    .st .nm { font-size: 12px; margin-top: 4px; }
+    .st .tk { font-size: 11px; color: var(--good); font-weight: 700; }
+    .qrbox { text-align: center; }
+    .qrbox img { width: 200px; height: 200px; background: #fff; border-radius: 12px; padding: 8px; }
+    .code { font-family: monospace; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+    .rank { font-size: 20px; font-weight: 800; }
+    .center { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wallet">
+    <div class="card center">
+      <div class="brand" style="justify-content:center">
+        <div class="logo">V1</div>
+        <div style="text-align:left">
+          <h1 style="font-size:16px;margin:0">AI Security Challenge</h1>
+          <div class="sub muted">Trend Vision One™ · electronic passport</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading" class="card center muted">Loading your passport…</div>
+
+    <div id="content" class="hidden">
+      <div class="card center">
+        <div id="pname" style="font-size:20px;font-weight:700"></div>
+        <div class="ptsbig"><span id="ppts">0</span> pts</div>
+        <div><span class="pill" id="pstamps">0 / 6 stamps</span>
+          <span class="pill" id="pdone"></span></div>
+        <div style="margin-top:6px"><span class="rank" id="prank"></span></div>
+      </div>
+
+      <div class="card">
+        <h2>Your stamps</h2>
+        <div class="stamps" id="stampGrid"></div>
+      </div>
+
+      <div class="card qrbox">
+        <h2>Show this at a station</h2>
+        <img id="qr" alt="passport QR" />
+        <div class="muted" style="font-size:12px;margin-top:8px">Code: <span class="code" id="pcode"></span></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">
+          Scan to resume on any device — keep it on your phone, no paper needed.</div>
+      </div>
+
+      <div class="card center">
+        <a href="#" id="playLink"><button>▶ Play / continue challenges</button></a>
+      </div>
+    </div>
+
+    <div class="card center muted" style="font-size:12px">
+      Don't just build AI. Secure it. · AI Fearlessly
+    </div>
+  </div>
+
+  <script src="/static/passport.js"></script>
+</body>
+</html>

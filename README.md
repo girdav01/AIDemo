@@ -24,6 +24,7 @@ cp .env.example .env          # optional — defaults work offline
 
 - Booth app (attendee + staff): <http://localhost:8000/>
 - Big-screen leaderboard:        <http://localhost:8000/screen>
+- Electronic passport (mobile):  <http://localhost:8000/passport>
 
 Run the tests:
 
@@ -84,6 +85,30 @@ can earn a real bypass.
   incident summary of their Break-the-Bot attack.
 
 ---
+
+## Electronic passport (no paper)
+
+The passport is **digital** — it lives on the attendee's phone, saving paper and
+counter space.
+
+- **Scan to start.** A booth poster (`dist/booth-passport-poster.pdf`) shows a QR
+  to the app. The attendee scans it, enters a screen name, and their passport is
+  created.
+- **The wallet.** `/passport` is a mobile view showing their stamp grid, points,
+  leaderboard rank, and a **personal QR** (encodes `/?p=<id>`). Scanning it
+  resumes the passport on any device — phone, a station tablet, or the big screen.
+- **Resume by link.** Any page accepts `?p=<id>` to restore a passport; the app
+  also remembers the player in `localStorage`.
+
+Print assets are generated from the booth runbook, not hand-maintained:
+
+```bash
+python tools/generate_pdfs.py --url https://your-booth-url/
+# → dist/station-cards.pdf          (staff reference, one card per station)
+# → dist/booth-passport-poster.pdf  ("Scan to start your e-passport" + QR)
+```
+
+Station cards stay **physical** (handy at each station); the passport does not.
 
 ## Booth ops
 

@@ -3,11 +3,12 @@
 Run:  uvicorn app.main:app --reload
 """
 
+import io
 import time
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -114,6 +115,18 @@ def get_passport(pid: str):
 @app.get("/api/leaderboard")
 def leaderboard():
     return {"leaderboard": store.leaderboard()}
+
+
+@app.get("/api/qr")
+def qr(data: str):
+    """Server-side QR PNG — used by the electronic passport (resume code) and
+    the 'scan to start' booth entry. Offline, no external service."""
+    import qrcode
+
+    img = qrcode.make(data, box_size=8, border=2)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
 
 
 @app.get("/api/events")
@@ -416,3 +429,9 @@ def index():
 def screen():
     """Big-screen leaderboard view for the booth."""
     return FileResponse(STATIC_DIR + "/screen.html")
+
+
+@app.get("/passport")
+def passport_page():
+    """Mobile electronic-passport wallet (replaces the paper passport)."""
+    return FileResponse(STATIC_DIR + "/passport.html")

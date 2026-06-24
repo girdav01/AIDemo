@@ -35,7 +35,9 @@ async function init() {
 }
 
 function restorePlayer() {
-  const saved = localStorage.getItem("v1_pid");
+  // Resume by link (?p=ID) — e.g. scanning a personal e-passport QR.
+  const fromUrl = new URLSearchParams(location.search).get("p");
+  const saved = fromUrl || localStorage.getItem("v1_pid");
   if (saved) {
     api("/api/passport/" + saved).then((p) => { setPlayer(p); }).catch(() => localStorage.removeItem("v1_pid"));
   }
@@ -60,6 +62,7 @@ function setPlayer(p) {
   localStorage.setItem("v1_pid", p.id);
   $("#passportBar").classList.add("hidden");
   $("#meBar").classList.remove("hidden");
+  $("#epassLink").href = "/passport?p=" + p.id;
   renderMe();
 }
 
