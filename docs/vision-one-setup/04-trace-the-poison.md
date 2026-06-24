@@ -1,7 +1,7 @@
 # 04 · Trace the Poison
 
 - **Capability:** Code Security (secret scanning + SCA + SBOM)
-- **Pillar:** Visibility · **Tier:** Builder (supply-chain story)
+- **Layer:** Visibility · **Tier:** Builder (supply-chain story)
 - **Objective:** Catch a hardcoded secret and a malicious/vulnerable dependency
   before deploy, then use the **SBOM** to trace the blast radius to a downstream
   app.

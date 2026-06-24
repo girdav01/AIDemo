@@ -1,7 +1,7 @@
 # 06 · Tame the Agent
 
 - **Capability:** Agentic governance
-- **Pillar:** Governance · **Tier:** Expert (rides the #1 Ai4 theme)
+- **Layer:** Governance · **Tier:** Expert (rides the #1 Ai4 theme)
 - **Objective:** An autonomous agent is intercepted when it tries an
   unauthorized action — including via **indirect prompt injection** from a
   poisoned document.

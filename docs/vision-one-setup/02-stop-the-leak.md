@@ -1,7 +1,7 @@
 # 02 · Stop the Leak
 
 - **Capability:** AI Guard (sensitive-data filtering / redaction)
-- **Pillar:** Control · **Tier:** Everyone (finance & healthcare favorite)
+- **Layer:** Control · **Tier:** Everyone (finance & healthcare favorite)
 - **Objective:** PII and secrets are redacted/blocked before they leave the
   model; every blocked leak is visible on a timeline (the compliance story).
 - **App integration point:** `POST /api/challenges/stop-the-leak/chat`;

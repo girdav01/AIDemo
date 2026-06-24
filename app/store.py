@@ -15,7 +15,7 @@ import time
 import uuid
 from typing import Dict, List, Optional
 
-from .challenges import PILLAR_BY_ID, PILLARS
+from .challenges import LAYER_BY_ID, LAYERS
 
 # Optional SQLite persistence so a restart doesn't wipe the board.
 # Opt-in (run.sh sets BOOTH_PERSIST=1); off by default so dev/tests stay in-memory.
@@ -37,7 +37,7 @@ CLEAR_POINTS = {
     "watch-mcp-wire": 75,
     "boss-level": 100,
 }
-FULL_PASSPORT_BONUS = 100  # awarded once one challenge in each pillar is cleared
+FULL_PASSPORT_BONUS = 100  # awarded once one challenge in each layer is cleared
 
 WINDOWS = ("hour", "day", "event")
 
@@ -50,8 +50,8 @@ _day_start: float = 0.0       # manual "new day" marker (0 = use clock day)
 _event_start: float = 0.0     # manual "new event" marker (0 = all-time)
 
 
-def _pillars_covered(stamps: Dict) -> set:
-    return {PILLAR_BY_ID.get(cid) for cid in stamps}
+def _layers_covered(stamps: Dict) -> set:
+    return {LAYER_BY_ID.get(cid) for cid in stamps}
 
 
 def _now() -> float:
@@ -138,8 +138,8 @@ def award(pid: str, challenge_id: str, extra: int = 0) -> Optional[Dict]:
             p["stamps"][challenge_id]["points"] += gained
         p["points"] += gained
         total = gained
-        # Full passport = one challenge cleared in each pillar (V/C/G). Once.
-        if not p["completed"] and set(PILLARS) <= _pillars_covered(p["stamps"]):
+        # Full passport = one challenge cleared in each layer (V/C/G). Once.
+        if not p["completed"] and set(LAYERS) <= _layers_covered(p["stamps"]):
             p["completed"] = True
             p["points"] += FULL_PASSPORT_BONUS
             total += FULL_PASSPORT_BONUS

@@ -1,7 +1,7 @@
 # 01 · Break the Bot
 
 - **Capability:** AI Guard (runtime protection for GenAI apps)
-- **Pillar:** Control · **Tier:** Everyone
+- **Layer:** Control · **Tier:** Everyone
 - **Objective:** AI Guard blocks prompt-injection / jailbreak attempts in real
   time; the OFF/ON toggle proves the value.
 - **App integration point:** `POST /api/challenges/break-the-bot/chat`,

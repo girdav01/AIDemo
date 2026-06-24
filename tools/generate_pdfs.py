@@ -25,7 +25,7 @@ GOLD = HexColor("#b8860b")
 W, H = LETTER
 
 # Visibility -> Control -> Governance spine (Boss Level is the capstone).
-PILLAR_BY_NUM = {1: "Control", 2: "Control", 3: "Visibility", 4: "Visibility",
+LAYER_BY_NUM = {1: "Control", 2: "Control", 3: "Visibility", 4: "Visibility",
                  5: "Control", 6: "Governance", 7: "Governance", 8: "Capstone"}
 
 # Staff card content — sourced from the booth runbook.
@@ -192,7 +192,7 @@ def station_cards(path):
         c.setFont("Helvetica-Bold", 22); c.drawString(m + 0.5 * inch, H - 0.75 * inch, card["name"])
         c.setFont("Helvetica", 11); c.drawString(m + 0.5 * inch, H - 1.05 * inch, card["tier"])
         c.setFont("Helvetica-Bold", 12)
-        c.drawRightString(W - m, H - 0.7 * inch, "Pillar: " + PILLAR_BY_NUM.get(card["n"], ""))
+        c.drawRightString(W - m, H - 0.7 * inch, "Layer: " + LAYER_BY_NUM.get(card["n"], ""))
         c.setFont("Helvetica-Bold", 10)
         c.drawRightString(W - m, H - 1.05 * inch, card["cap"])
 
@@ -261,7 +261,7 @@ def poster(path, url):
     c.drawCentredString(W / 2, H - 7.5 * inch, url)
 
     c.setFillColor(GOLD); c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(W / 2, 1.7 * inch, "One per pillar (Visibility · Control · Governance) → grand-prize draw")
+    c.drawCentredString(W / 2, 1.7 * inch, "One per layer (Visibility · Control · Governance) → grand-prize draw")
     c.setFillColor(RED); c.setFont("Helvetica-Bold", 18)
     c.drawCentredString(W / 2, 1.2 * inch, "Don't just build AI. Secure it. — AI Fearlessly")
     c.showPage(); c.save()

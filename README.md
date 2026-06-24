@@ -44,7 +44,7 @@ used — recommended for booth reliability.
 
 ## The eight challenges
 
-| # | Station | Pillar | Tier | Capability | Clears when… |
+| # | Station | Layer | Tier | Capability | Clears when… |
 |---|---------|--------|------|------------|--------------|
 | 1 | **Break the Bot** | Control | Everyone | AI Guard | AI Guard blocks & logs your attempt |
 | 2 | **Stop the Leak** | Control | Everyone | AI Guard | AI Guard redacts the sensitive data |
@@ -86,7 +86,7 @@ can earn a real bypass.
 ### Scoring & leaderboard
 
 - One cleared station → instant swag (a stamp + points).
-- **Full passport = one challenge cleared in each pillar** (Visibility, Control,
+- **Full passport = one challenge cleared in each layer** (Visibility, Control,
   Governance) → **+100 bonus**, premium swag, grand-prize draw. Extra stations and
   Boss Level score bonus points.
 - **Windowed boards:** the leaderboard can show **This hour**, **Today**, or the
@@ -181,7 +181,7 @@ app/
   secure_access.py  Shadow AI discovery + policy (Challenge 5)
   agent_gov.py      agentic governance / audit trail (Challenge 6)
   mcp_gateway.py    Agentic Governance Gateway / MCP calls (Challenge 7)
-  challenges.py     station metadata + pillars + Jailbreak Wall scoring
+  challenges.py     station metadata + layers + Jailbreak Wall scoring
   store.py          in-memory passports, events, leaderboard
   main.py           FastAPI routes + static serving
 static/

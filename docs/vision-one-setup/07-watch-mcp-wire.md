@@ -1,7 +1,7 @@
 # 07 · Watch the MCP Wire
 
 - **Capability:** Agentic Governance Gateway (AGG) — LLM + MCP proxy
-- **Pillar:** Governance · **Tier:** Expert · **NEW July preview (conditional)**
+- **Layer:** Governance · **Tier:** Expert · **NEW July preview (conditional)**
 - **Objective:** Show the gateway as the single governed choke point in front of
   an agent: full visibility into every MCP tool-call, policy enforced in one
   place.

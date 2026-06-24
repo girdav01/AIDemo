@@ -1,7 +1,7 @@
 # 03 · Find the Flaw
 
 - **Capability:** AI Scanner (pre-deployment scanning)
-- **Pillar:** Visibility · **Tier:** Builder
+- **Layer:** Visibility · **Tier:** Builder
 - **Objective:** Catch AI app/model vulnerabilities before deploy — shift-left,
   scan-before-you-ship. Attendee names the OWASP LLM category of the top finding.
 - **App integration point:** `GET /api/challenges/find-the-flaw/scan`,

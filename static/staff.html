@@ -40,7 +40,7 @@
     async function load() {
       const chs = (await (await fetch("/api/challenges")).json()).challenges;
       document.getElementById("challenge").innerHTML =
-        chs.map(c => `<option value="${c.id}">${c.number}. ${esc(c.name)} (${esc(c.pillar)})</option>`).join("");
+        chs.map(c => `<option value="${c.id}">${c.number}. ${esc(c.name)} (${esc(c.layer)})</option>`).join("");
     }
     async function award() {
       const target = document.getElementById("target").value.trim();

@@ -30,7 +30,7 @@ function render(p, lb) {
   document.getElementById("ppts").textContent = p.points;
   const n = Object.keys(p.stamps || {}).length;
   document.getElementById("pstamps").textContent = n + " / " + CH.length + " stamps";
-  const byId = Object.fromEntries(CH.map((c) => [c.id, c.pillar]));
+  const byId = Object.fromEntries(CH.map((c) => [c.id, c.layer]));
   const cov = new Set(Object.keys(p.stamps || {}).map((id) => byId[id]));
   const pills = ["Visibility", "Control", "Governance"].map((x) => x[0] + (cov.has(x) ? "✓" : "—")).join(" · ");
   document.getElementById("pdone").textContent = p.completed ? "✅ Full passport — draw entered!" : pills;
