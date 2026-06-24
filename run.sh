@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch the Vision One AI Security Challenge booth app.
+# Launch the TrendAI Vision One AI Security Challenge booth app.
 set -euo pipefail
 cd "$(dirname "$0")"
 

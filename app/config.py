@@ -26,5 +26,5 @@ PORT: int = int(_get("PORT", "8000") or "8000")
 
 # Branding (from the booth runbook).
 EVENT_NAME = "Ai4 2026 · The Venetian, Las Vegas"
-PRODUCT_NAME = "TrendAI · Vision One"
-APP_TITLE = "Vision One AI Security Challenge"
+PRODUCT_NAME = "TrendAI Vision One"
+APP_TITLE = "TrendAI Vision One AI Security Challenge"

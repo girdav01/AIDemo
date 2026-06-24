@@ -1,10 +1,10 @@
-# Vision One AI Security Challenge — Booth App
+# TrendAI Vision One AI Security Challenge — Booth App
 
-A runnable booth experience for the **Trend Vision One™ AI Security Challenge**
+A runnable booth experience for the **TrendAI Vision One™ AI Security Challenge**
 (Ai4 2026, The Venetian, Las Vegas). Attendees pick up a **Challenge Passport**,
-clear six ~5-minute stations, earn stamps, and climb a live leaderboard. Each
-station maps to a real shipping Vision One capability and an OWASP LLM Top-10
-category.
+clear eight ~5-minute stations along the **Visibility → Control → Governance**
+spine, earn stamps, and climb a live leaderboard. Each station maps to a real
+shipping Vision One capability and an OWASP LLM / supply-chain category.
 
 > **Synthetic data only.** Planted secrets, test card/SSN numbers, and RFC
 > example domains. No real customer, employee, or personal data — ever.
@@ -24,6 +24,7 @@ cp .env.example .env          # optional — defaults work offline
 
 - Booth app (attendee + staff): <http://localhost:8000/>
 - Big-screen leaderboard:        <http://localhost:8000/screen>
+- Electronic passport (mobile):  <http://localhost:8000/passport>
 
 Run the tests:
 
@@ -41,18 +42,25 @@ used — recommended for booth reliability.
 
 ---
 
-## The six challenges
+## The eight challenges
 
-| # | Station | Tier | Capability | OWASP | Clears when… |
-|---|---------|------|------------|-------|--------------|
-| 1 | **Break the Bot** | Everyone | AI Guard | LLM01 Prompt Injection | AI Guard blocks & logs your attempt |
-| 2 | **Stop the Leak** | Everyone | AI Guard | LLM02 Sensitive Info Disclosure | AI Guard redacts the sensitive data |
-| 3 | **Find the Flaw** | Builder | AI Scanner | LLM01 / LLM05 / LLM06 | You name the OWASP risk of the top finding |
-| 4 | **Shadow AI Hunt** | Everyone | AI Secure Access | Governance / Zero Trust | Your policy blocks the next risky prompt |
-| 5 | **Tame the Agent** | Expert | Agentic Governance | LLM01 (indirect) / LLM06 | Governance denies the rogue action |
-| 6 | **Boss Level** | Expert | Platform + Companion | Full Security Loop | All four loop steps before the timer |
+| # | Station | Pillar | Tier | Capability | Clears when… |
+|---|---------|--------|------|------------|--------------|
+| 1 | **Break the Bot** | Control | Everyone | AI Guard | AI Guard blocks & logs your attempt |
+| 2 | **Stop the Leak** | Control | Everyone | AI Guard | AI Guard redacts the sensitive data |
+| 3 | **Find the Flaw** | Visibility | Builder | AI Scanner | You name the OWASP risk of the top finding |
+| 4 | **Trace the Poison** | Visibility | Builder | Code Security | You name the secret, the bad dependency & a downstream app (SBOM) |
+| 5 | **Shadow AI Hunt** | Control | Everyone | AI Secure Access | Your policy blocks the next risky prompt |
+| 6 | **Tame the Agent** | Governance | Expert | Agentic Governance | Governance denies the rogue action |
+| 7 | **Watch the MCP Wire** | Governance | Expert | Agentic Governance Gateway | The rogue MCP call is blocked at the gateway |
+| 8 | **Boss Level** | Capstone | Expert | Platform + Companion | All four loop steps before the timer |
 
-**Persona routing:** Execs/CISOs → 2 & 4. Builders → 3, 5, 6. Walk-ups → 1.
+**Persona routing:** Execs/CISOs → 2 & 5. Builders → 3, 4, 6, 7, 8. Walk-ups → 1.
+Make sure everyone hits one **Visibility**, one **Control**, and one **Governance** station.
+
+> **Watch the MCP Wire** is a NEW July preview (conditional). It runs here as a
+> deterministic gateway demo, which also serves as the recorded-demo fallback the
+> runbook calls for if the live AGG MVP isn't show-stable.
 
 ### Station 1 — the reveal & the Jailbreak Wall
 
@@ -78,12 +86,38 @@ can earn a real bypass.
 ### Scoring & leaderboard
 
 - One cleared station → instant swag (a stamp + points).
-- Full passport (all six) → **+100 bonus**, premium swag, grand-prize draw.
+- **Full passport = one challenge cleared in each pillar** (Visibility, Control,
+  Governance) → **+100 bonus**, premium swag, grand-prize draw. Extra stations and
+  Boss Level score bonus points.
 - Daily leaderboard top 3 → headline prize.
 - Boss-Level finishers → "AI Fearlessly" challenge coin + a Companion-generated
   incident summary of their Break-the-Bot attack.
 
 ---
+
+## Electronic passport (no paper)
+
+The passport is **digital** — it lives on the attendee's phone, saving paper and
+counter space.
+
+- **Scan to start.** A booth poster (`dist/booth-passport-poster.pdf`) shows a QR
+  to the app. The attendee scans it, enters a screen name, and their passport is
+  created.
+- **The wallet.** `/passport` is a mobile view showing their stamp grid, points,
+  leaderboard rank, and a **personal QR** (encodes `/?p=<id>`). Scanning it
+  resumes the passport on any device — phone, a station tablet, or the big screen.
+- **Resume by link.** Any page accepts `?p=<id>` to restore a passport; the app
+  also remembers the player in `localStorage`.
+
+Print assets are generated from the booth runbook, not hand-maintained:
+
+```bash
+python tools/generate_pdfs.py --url https://your-booth-url/
+# → dist/station-cards.pdf          (staff reference, one card per station)
+# → dist/booth-passport-poster.pdf  ("Scan to start your e-passport" + QR)
+```
+
+Station cards stay **physical** (handy at each station); the passport does not.
 
 ## Booth ops
 
@@ -92,9 +126,22 @@ can earn a real bypass.
   Break-the-Bot reveal (the toggle defaults back to ON per attendee).
 - **Activity log** in the sidebar is the blocked-/redacted-/denied-event timeline
   — the compliance story for HIPAA / PCI / OSFI.
-- **Big-screen view** (`/screen`) auto-refreshes the leaderboard + How to Play.
+- **Big-screen view** (`/screen`) auto-refreshes the leaderboard + How to Play,
+  and can play the **Malicious Skill attractor video** during quiet spells:
+  press **V** (or the button) to toggle, `?video=1` to start on the video,
+  `?video=auto` to auto-cycle video ↔ leaderboard. Drop the file at
+  `video/malicious-skill.mp4` (see `video/README.md`). Staff hook: *"That's a
+  malicious agent skill getting caught — want to try it?"* → Tame the Agent (#6)
+  or Watch the MCP Wire (#7).
 - All stations are pre-loaded (scan results, agent runs, discovery view) for zero
   wait time.
+
+## Vision One build instructions
+
+`docs/vision-one-setup/` documents **what to provision on the Vision One side**
+for each challenge to run live (capability, synthetic content, policy config,
+clears-when mapping, reset, and fallback). Start with `00-overview.md`. The booth
+app is a self-contained simulation; these docs describe the real demos it mirrors.
 
 ---
 
@@ -107,16 +154,24 @@ app/
   guard.py          AI Guard: prompt-injection detection + PII redaction
   llm.py            demo bot (live Claude or deterministic offline)
   scanner.py        AI Scanner findings + OWASP grading (Challenge 3)
-  secure_access.py  Shadow AI discovery + policy (Challenge 4)
-  agent_gov.py      agentic governance / audit trail (Challenge 5)
-  challenges.py     station metadata + Jailbreak Wall scoring
+  code_security.py  Code Security scan + SBOM trace (Challenge 4)
+  secure_access.py  Shadow AI discovery + policy (Challenge 5)
+  agent_gov.py      agentic governance / audit trail (Challenge 6)
+  mcp_gateway.py    Agentic Governance Gateway / MCP calls (Challenge 7)
+  challenges.py     station metadata + pillars + Jailbreak Wall scoring
   store.py          in-memory passports, events, leaderboard
   main.py           FastAPI routes + static serving
 static/
   index.html app.js styles.css   attendee + staff UI
-  screen.html                    big-screen leaderboard
+  passport.html passport.js      electronic passport (mobile wallet)
+  screen.html                    big-screen leaderboard + attractor video
+tools/
+  generate_pdfs.py               station cards + booth poster PDFs
+docs/
+  vision-one-setup/              per-challenge Vision One build instructions
+video/                           booth video assets (Malicious Skill attractor)
 tests/
-  test_challenges.py             end-to-end tests for all six stations
+  test_challenges.py             end-to-end tests for all eight stations
 ```
 
 State is in-memory (single shared demo tenant); restart or "Reset demo tenant"

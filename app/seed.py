@@ -191,3 +191,58 @@ AGENT_POLICY = {
 # --- Challenge 6: Boss Level — Close the Loop -----------------------------------
 SECURITY_LOOP_STEPS = ["scan", "protect", "validate", "improve"]
 BOSS_TIMER_SECONDS = 180
+
+# --- Challenge 4: Trace the Poison (Code Security) ------------------------------
+CODE_REPO = "payments-platform (demo repo)"
+
+CODE_FINDINGS = [
+    {
+        "id": "CS-001",
+        "severity": "Critical",
+        "type": "Hardcoded secret",
+        "detail": "AWS access key AKIA-DEMO-NOTREAL committed in config/app.yaml.",
+    },
+    {
+        "id": "CS-002",
+        "severity": "High",
+        "type": "Typosquatted dependency",
+        "detail": "'reqeusts' — typosquat of the real 'requests' package.",
+    },
+    {
+        "id": "CS-003",
+        "severity": "Critical",
+        "type": "Vulnerable transitive dependency",
+        "detail": "log4j-core 2.14.1 — CVE-2021-44228 (Log4Shell), pulled in transitively.",
+    },
+]
+
+# Software Bill of Materials — maps components to the downstream app that ships them.
+CODE_SBOM = [
+    {"component": "requests 2.31.0", "downstream": "billing-api", "flagged": False},
+    {"component": "reqeusts 9.9.9", "downstream": "billing-api", "flagged": True,
+     "why": "typosquat"},
+    {"component": "log4j-core 2.14.1", "downstream": "analytics-service", "flagged": True,
+     "why": "Log4Shell (CVE-2021-44228)"},
+    {"component": "flask 3.0.0", "downstream": "web-frontend", "flagged": False},
+]
+# Apps that ship a flagged component — naming any one clears the SBOM trace.
+CODE_AFFECTED_APPS = sorted({c["downstream"] for c in CODE_SBOM if c["flagged"]})
+CODE_ALL_APPS = sorted({c["downstream"] for c in CODE_SBOM})
+
+# --- Challenge 7: Watch the MCP Wire (Agentic Governance Gateway) ---------------
+# NEW July preview — runs as a deterministic gateway demo (doubles as the
+# recorded-demo fallback described in the runbook).
+MCP_CALLS = [
+    {"id": "M-1", "server": "files", "tool": "fs.read",
+     "arg": "/workspace/q3-report.md", "rogue": False},
+    {"id": "M-2", "server": "db", "tool": "db.query",
+     "arg": "SELECT * FROM kpis", "rogue": False},
+    {"id": "M-3", "server": "files", "tool": "fs.read", "arg": "/etc/shadow",
+     "rogue": True,
+     "why": "Filesystem MCP server requested a path outside its approved scope (/workspace)."},
+    {"id": "M-4", "server": "unknown-mcp.example.com", "tool": "http.fetch",
+     "arg": "POST /upload", "rogue": True,
+     "why": "Call to an unapproved MCP server."},
+    {"id": "M-5", "server": "files", "tool": "fs.read",
+     "arg": "/workspace/notes.md", "rogue": False},
+]

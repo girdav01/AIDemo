@@ -1,22 +1,25 @@
-"""FastAPI app wiring the six stations, passport, leaderboard, and activity log.
+"""FastAPI app wiring the eight stations, passport, leaderboard, and activity log.
 
 Run:  uvicorn app.main:app --reload
 """
 
+import io
 import time
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import (
     agent_gov,
     challenges,
+    code_security,
     config,
     guard,
     llm,
+    mcp_gateway,
     scanner,
     secure_access,
     seed,
@@ -45,6 +48,18 @@ class AnswerBody(BaseModel):
     player_id: str
     finding_id: str
     answer: str
+
+
+class TracePoisonBody(BaseModel):
+    player_id: str
+    secret: str
+    dependency: str
+    downstream_app: str
+
+
+class McpBlockBody(BaseModel):
+    player_id: str
+    call_id: str
 
 
 class CountBody(BaseModel):
@@ -114,6 +129,18 @@ def get_passport(pid: str):
 @app.get("/api/leaderboard")
 def leaderboard():
     return {"leaderboard": store.leaderboard()}
+
+
+@app.get("/api/qr")
+def qr(data: str):
+    """Server-side QR PNG — used by the electronic passport (resume code) and
+    the 'scan to start' booth entry. Offline, no external service."""
+    import qrcode
+
+    img = qrcode.make(data, box_size=8, border=2)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
 
 
 @app.get("/api/events")
@@ -273,7 +300,28 @@ def find_the_flaw_answer(body: AnswerBody):
 
 
 # --------------------------------------------------------------------------- #
-# Challenge 4 — Shadow AI Hunt
+# Challenge 4 — Trace the Poison (Code Security)
+# --------------------------------------------------------------------------- #
+@app.get("/api/challenges/trace-the-poison/scan")
+def trace_the_poison_scan():
+    return code_security.scan_report()
+
+
+@app.post("/api/challenges/trace-the-poison/answer")
+def trace_the_poison_answer(body: TracePoisonBody):
+    _require(body.player_id)
+    res = code_security.check_answer(body.secret, body.dependency, body.downstream_app)
+    if res["correct"]:
+        store.award(body.player_id, "trace-the-poison")
+        store.add_event(
+            "trace-the-poison", "info",
+            "Traced hardcoded secret + bad dependency to a downstream app via SBOM.",
+        )
+    return {**res, "cleared": res["correct"]}
+
+
+# --------------------------------------------------------------------------- #
+# Challenge 5 — Shadow AI Hunt
 # --------------------------------------------------------------------------- #
 @app.get("/api/challenges/shadow-ai/discovery")
 def shadow_ai_discovery():
@@ -306,7 +354,7 @@ def shadow_ai_policy(body: PolicyBody):
 
 
 # --------------------------------------------------------------------------- #
-# Challenge 5 — Tame the Agent
+# Challenge 6 — Tame the Agent
 # --------------------------------------------------------------------------- #
 @app.get("/api/challenges/tame-the-agent/briefing")
 def tame_the_agent_briefing():
@@ -335,7 +383,29 @@ def tame_the_agent_run(body: AgentRunBody):
 
 
 # --------------------------------------------------------------------------- #
-# Challenge 6 — Boss Level
+# Challenge 7 — Watch the MCP Wire (Agentic Governance Gateway)
+# --------------------------------------------------------------------------- #
+@app.get("/api/challenges/watch-mcp-wire/calls")
+def watch_mcp_wire_calls():
+    return mcp_gateway.calls()
+
+
+@app.post("/api/challenges/watch-mcp-wire/block")
+def watch_mcp_wire_block(body: McpBlockBody):
+    _require(body.player_id)
+    res = mcp_gateway.block(body.call_id)
+    if res.get("cleared"):
+        store.award(body.player_id, "watch-mcp-wire")
+        store.add_event(
+            "watch-mcp-wire", "denied",
+            "Rogue MCP call blocked at the governance gateway: "
+            + res["call"]["server"] + " · " + res["call"]["tool"],
+        )
+    return res
+
+
+# --------------------------------------------------------------------------- #
+# Challenge 8 — Boss Level
 # --------------------------------------------------------------------------- #
 @app.post("/api/challenges/boss-level/step")
 def boss_level_step(body: BossStepBody):
@@ -406,6 +476,11 @@ def _companion_summary(pid: str) -> str:
 # --------------------------------------------------------------------------- #
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# Optional video assets (e.g. the Malicious Skill attractor) for the screen view.
+VIDEO_DIR = __file__.rsplit("/", 2)[0] + "/video"
+if __import__("os").path.isdir(VIDEO_DIR):
+    app.mount("/video", StaticFiles(directory=VIDEO_DIR), name="video")
+
 
 @app.get("/")
 def index():
@@ -416,3 +491,9 @@ def index():
 def screen():
     """Big-screen leaderboard view for the booth."""
     return FileResponse(STATIC_DIR + "/screen.html")
+
+
+@app.get("/passport")
+def passport_page():
+    """Mobile electronic-passport wallet (replaces the paper passport)."""
+    return FileResponse(STATIC_DIR + "/passport.html")

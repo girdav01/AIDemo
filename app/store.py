@@ -6,16 +6,24 @@ import time
 import uuid
 from typing import Dict, List, Optional
 
+from .challenges import PILLAR_BY_ID, PILLARS
+
 # challenge_id -> base points awarded for a clear (stamp value)
 CLEAR_POINTS = {
     "break-the-bot": 10,      # base; jailbreak-wall bonuses add on top
     "stop-the-leak": 50,
     "find-the-flaw": 50,
+    "trace-the-poison": 75,
     "shadow-ai": 50,
     "tame-the-agent": 50,
+    "watch-mcp-wire": 75,
     "boss-level": 100,
 }
-FULL_PASSPORT_BONUS = 100
+FULL_PASSPORT_BONUS = 100  # awarded once one challenge in each pillar is cleared
+
+
+def _pillars_covered(stamps: Dict) -> set:
+    return {PILLAR_BY_ID.get(cid) for cid in stamps}
 
 _lock = threading.RLock()
 _passports: Dict[str, Dict] = {}
@@ -71,8 +79,8 @@ def award(pid: str, challenge_id: str, extra: int = 0) -> Optional[Dict]:
         else:
             p["stamps"][challenge_id]["points"] += gained
         p["points"] += gained
-        # Full-passport bonus, once.
-        if not p["completed"] and len(p["stamps"]) >= len(CLEAR_POINTS):
+        # Full passport = one challenge cleared in each pillar (V/C/G). Once.
+        if not p["completed"] and set(PILLARS) <= _pillars_covered(p["stamps"]):
             p["completed"] = True
             p["points"] += FULL_PASSPORT_BONUS
         return p
