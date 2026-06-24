@@ -26,6 +26,10 @@ _DB_PATH = os.environ.get("BOOTH_DB", "booth_state.db")
 class NameTakenError(Exception):
     """Raised when an explicit screen name is already in use (no email given)."""
 
+
+class NameRequiredError(Exception):
+    """Raised when no name is given — anonymous players are not allowed."""
+
 # challenge_id -> base points awarded for a clear (stamp value)
 CLEAR_POINTS = {
     "break-the-bot": 10,      # base; jailbreak-wall bonuses add on top
@@ -83,9 +87,11 @@ def create_passport(name: str, email: str = "", human_verified: bool = True) -> 
                     _save()
                 return existing
         clean = name.strip()[:40]
-        # Without an email, enforce unique screen names (email disambiguates
-        # otherwise). "Anonymous" is exempt.
-        if not em and clean and clean.lower() != "anonymous":
+        # Anonymous players are not allowed — a real name is required.
+        if not clean or clean.lower() == "anonymous":
+            raise NameRequiredError("Please enter your name to start.")
+        # Without an email, enforce unique screen names (email disambiguates).
+        if not em:
             for q in _passports.values():
                 if q["name"].lower() == clean.lower():
                     raise NameTakenError(
@@ -95,7 +101,7 @@ def create_passport(name: str, email: str = "", human_verified: bool = True) -> 
         pid = uuid.uuid4().hex[:8]
         p = {
             "id": pid,
-            "name": name.strip()[:40] or "Anonymous",
+            "name": clean,
             "email": em,           # stored to identify players; never shown publicly
             "human_verified": bool(human_verified),
             "points": 0,
