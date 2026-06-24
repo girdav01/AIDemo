@@ -76,10 +76,12 @@ button.ghost:hover { background: var(--panel-2); }
 .station .cap { font-size: 12px; color: var(--trend-red); }
 .station.done { border-color: var(--good); }
 .station .stamp {
-  display: none; position: absolute; top: 8px; left: 10px; color: var(--good);
-  font-weight: 800; font-size: 12px;
+  display: none; color: var(--good); font-weight: 800; font-size: 11px;
+  margin-bottom: 6px; letter-spacing: .3px;
 }
-.station.done .stamp { display: block; }
+.station.done .stamp { display: inline-block; }
+/* keep the stamp clear of the number badge in the top-right */
+.station.done .num { top: 8px; }
 
 .panel { margin-top: 16px; }
 .muted { color: var(--muted); }
