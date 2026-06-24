@@ -4,7 +4,7 @@ What to build on the **Trend Vision One** side so each booth challenge runs live
 Each challenge has its own file (`01`–`08`) with the same structure:
 
 - **Capability** — the Vision One module it demos.
-- **Pillar** — Visibility / Control / Governance.
+- **Layer** — Visibility / Control / Governance.
 - **Provision on the Vision One side** — the build checklist.
 - **Synthetic content to plant** — exact values (match the booth app).
 - **Policy / config** — what makes the "clears when" fire.
@@ -37,9 +37,9 @@ Each challenge has its own file (`01`–`08`) with the same structure:
 6. **Booth accounts/roles** for staff with least privilege needed to apply demo
    policies and reset state.
 
-## Pillar / station map
+## Layer / station map
 
-| # | Station | Pillar | Vision One capability |
+| # | Station | Layer | Vision One capability |
 |---|---------|--------|------------------------|
 | 1 | Break the Bot | Control | AI Guard (runtime) |
 | 2 | Stop the Leak | Control | AI Guard (sensitive-data filtering) |

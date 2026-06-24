@@ -1,7 +1,7 @@
 # 05 · Shadow AI Hunt
 
 - **Capability:** AI Secure Access (Zero Trust)
-- **Pillar:** Control · **Tier:** Everyone (the exec / CISO win)
+- **Layer:** Control · **Tier:** Everyone (the exec / CISO win)
 - **Objective:** Discover unsanctioned GenAI use and enforce policy without
   banning the tools people need.
 - **App integration point:** `GET /api/challenges/shadow-ai/discovery`,

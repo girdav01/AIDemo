@@ -3,7 +3,7 @@
 
 Mirrors the booth runbook / screen content: eight challenges along the
 Visibility -> Control -> Governance spine, persona routing (Execs / CIO / CAIO /
-CISO, AI Builders, Walk-ups), and the "one per pillar" passport completion.
+CISO, AI Builders, Walk-ups), and the "one per layer" passport completion.
 
 Run:  python tools/generate_screen_deck.py
       -> dist/AI4_VisionOne_Challenge_BoothScreen.pptx
@@ -144,12 +144,12 @@ def challenges_slide(prs):
     table.columns[1].width = Inches(1.5)
     table.columns[2].width = Inches(4.3)
     table.columns[3].width = Inches(4.0)
-    headers = ["Challenge", "Pillar", "Your mission in Vision One", "You clear it when…"]
+    headers = ["Challenge", "Layer", "Your mission in Vision One", "You clear it when…"]
     for c, h in enumerate(headers):
         _cell(table.cell(0, c), h, 14, WHITE, bold=True, fill=RED)
-    for i, (name, pillar, mission, clears) in enumerate(CHALLENGES, start=1):
+    for i, (name, layer, mission, clears) in enumerate(CHALLENGES, start=1):
         _cell(table.cell(i, 0), name, 13, TEXT, bold=True)
-        _cell(table.cell(i, 1), pillar, 12, GOLD, bold=True)
+        _cell(table.cell(i, 1), layer, 12, GOLD, bold=True)
         _cell(table.cell(i, 2), mission, 12, TEXT)
         _cell(table.cell(i, 3), clears, 12, MUTED)
 
@@ -192,9 +192,9 @@ def build(path):
         [
             "Grab a Challenge Passport at the counter.",
             "Clear any station in about 5 minutes with a TrendAI guide.",
-            "Earn a stamp in each pillar — Visibility · Control · Governance.",
+            "Earn a stamp in each layer — Visibility · Control · Governance.",
             "Watch your name climb the live leaderboard on this screen.",
-            "One challenge per pillar fills your passport and enters the grand-prize draw.",
+            "One challenge per layer fills your passport and enters the grand-prize draw.",
         ],
         footer="Only 37% of organizations test their AI before they ship it. Be the exception.",
     )
@@ -205,7 +205,7 @@ def build(path):
         prs, "Prizes & Leaderboard",
         [
             "Beat one challenge → instant swag.",
-            "Full passport (one per pillar) → premium swag + grand-prize draw.",
+            "Full passport (one per layer) → premium swag + grand-prize draw.",
             "Daily leaderboard top 3 → headline prize, drawn at 4 PM each day.",
             "Boss Level finishers → exclusive “AI Fearlessly” challenge coin.",
         ],

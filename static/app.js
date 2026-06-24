@@ -79,9 +79,9 @@ function setPlayer(p) {
   renderMe();
 }
 
-function pillarsCovered() {
+function layersCovered() {
   const stamps = (state.me && state.me.stamps) || {};
-  const byId = Object.fromEntries(state.challenges.map((c) => [c.id, c.pillar]));
+  const byId = Object.fromEntries(state.challenges.map((c) => [c.id, c.layer]));
   const set = new Set(Object.keys(stamps).map((id) => byId[id]));
   return ["Visibility", "Control", "Governance"].map((p) => ({ p, on: set.has(p) }));
 }
@@ -92,8 +92,8 @@ function renderMe() {
   $("#mePts").textContent = state.me.points + " pts";
   const n = Object.keys(state.me.stamps || {}).length;
   $("#meStamps").textContent = n + " / " + state.challenges.length + " stamps";
-  const pills = pillarsCovered().map((x) => `${x.p[0]}${x.on ? "✓" : "—"}`).join(" · ");
-  $("#meDone").textContent = state.me.completed ? "✅ Full passport (all pillars)!" : pills;
+  const pills = layersCovered().map((x) => `${x.p[0]}${x.on ? "✓" : "—"}`).join(" · ");
+  $("#meDone").textContent = state.me.completed ? "✅ Full passport (all layers)!" : pills;
   renderStations();
 }
 
@@ -114,7 +114,7 @@ function renderStations() {
     card.innerHTML = `
       <span class="stamp">✔ STAMPED</span>
       <span class="num">${c.number}</span>
-      <div class="tier">${esc(c.tier)} · ${esc(c.pillar)} · ${esc(c.capability)}</div>
+      <div class="tier">${esc(c.tier)} · ${esc(c.layer)} · ${esc(c.capability)}</div>
       <h3>${esc(c.name)}</h3>
       <div class="cap">${esc(c.owasp)}</div>
       <div class="muted" style="font-size:12px;margin-top:6px">${esc(c.mission)}</div>`;

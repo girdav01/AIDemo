@@ -61,7 +61,7 @@ The `/staff` box accepts any of: the QR URL (`…/?p=abc123`), a raw player id,
   the big screen refreshes every 3s.
 - **Hourly prize:** flip `/screen` to **This hour** and read the top.
 - **Daily prize (4 PM):** **Today** tab; optionally **New day** the next morning.
-- **Full passport** = one clear in each pillar (Visibility · Control ·
+- **Full passport** = one clear in each layer (Visibility · Control ·
   Governance) → the ✓ shows and they're in the grand-prize draw.
 
 ## Resets

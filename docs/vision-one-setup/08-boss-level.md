@@ -1,7 +1,7 @@
 # 08 · Boss Level — Close the Loop
 
 - **Capability:** Vision One platform Security Loop + Companion
-- **Pillar:** Capstone · **Tier:** Expert
+- **Layer:** Capstone · **Tier:** Expert
 - **Objective:** Speed-run the full Security Loop on one app —
   **scan → protect → validate → improve** — finishing with a **Companion**-
   generated incident summary. Beat the 3-minute timer.
