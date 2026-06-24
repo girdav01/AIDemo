@@ -1,6 +1,6 @@
 # Vision One AI Security Challenge — Booth App
 
-A runnable booth experience for the **Trend Vision One™ AI Security Challenge**
+A runnable booth experience for the **TrendAI Vision One™ AI Security Challenge**
 (Ai4 2026, The Venetian, Las Vegas). Attendees pick up a **Challenge Passport**,
 clear six ~5-minute stations, earn stamps, and climb a live leaderboard. Each
 station maps to a real shipping Vision One capability and an OWASP LLM Top-10

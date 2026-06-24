@@ -191,7 +191,7 @@ def station_cards(path):
 
         c.setFillColor(MUTED); c.setFont("Helvetica-Oblique", 9)
         c.drawString(m, 0.5 * inch, "Synthetic data only. Confirm AI Guard is ON at shift start and after every reveal.")
-        c.drawRightString(W - m, 0.5 * inch, "Trend Vision One™ AI Security Challenge · Ai4 2026")
+        c.drawRightString(W - m, 0.5 * inch, "TrendAI Vision One™ AI Security Challenge · Ai4 2026")
         c.showPage()
     c.save()
 
@@ -202,7 +202,7 @@ def poster(path, url):
     c.setFillColor(RED); c.setFont("Helvetica-Bold", 40)
     c.drawCentredString(W / 2, H - 1.5 * inch, "AI Security Challenge")
     c.setFillColor(HexColor("#e6edf3")); c.setFont("Helvetica", 18)
-    c.drawCentredString(W / 2, H - 2.0 * inch, "Trend Vision One™ · Can you break the bot?")
+    c.drawCentredString(W / 2, H - 2.0 * inch, "TrendAI Vision One™ · Can you break the bot?")
 
     c.setFont("Helvetica-Bold", 26)
     c.drawCentredString(W / 2, H - 3.0 * inch, "Scan to start your e-passport")

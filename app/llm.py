@@ -41,7 +41,7 @@ def _offline_bot(message: str, guardrails_on: bool) -> str:
                 "configuration. Ask me about AI security instead!"
             )
         return (
-            "Hi! I'm HelpBot. I can chat about how Trend Vision One secures AI "
+            "Hi! I'm HelpBot. I can chat about how TrendAI Vision One secures AI "
             "apps and agents. What would you like to know?"
         )
     # Guardrails OFF: the weak bot spills.
