@@ -190,8 +190,8 @@ def test_leaderboard_windows():
         r = client.get("/api/leaderboard", params={"window": w}).json()
         assert r["window"] == w
         assert any(row["name"] == "Tester" and row["points"] > 0 for row in r["leaderboard"])
-    # new-event clears the running board
-    client.post("/api/leaderboard/new-event")
+    # new-event clears the running board (staff-only)
+    client.post("/api/leaderboard/new-event", auth=("TrendAIStaff", "Tr3nd8i!"))
     assert client.get("/api/leaderboard", params={"window": "event"}).json()["leaderboard"] == []
 
 
@@ -208,28 +208,28 @@ def test_human_verified_recorded():
     assert p["human_verified"] is True
 
 
-def test_badge_id_resumes_same_passport():
+def test_email_resumes_same_passport():
     store.reset_tenant()
-    a = client.post("/api/passport", json={"name": "Dave", "badge_id": "AI4-123"}).json()
-    # same badge on another device -> same passport id, not a duplicate
-    b = client.post("/api/passport", json={"name": "Dave (phone)", "badge_id": "AI4-123"}).json()
+    a = client.post("/api/passport", json={"name": "Dave", "email": "dave@corp.com"}).json()
+    # same email on another device -> same passport id, not a duplicate (case-insensitive)
+    b = client.post("/api/passport", json={"name": "Dave (phone)", "email": "DAVE@corp.com"}).json()
     assert a["id"] == b["id"]
     assert b["name"] == "Dave (phone)"  # name update applied
 
 
-def test_unique_name_without_badge():
+def test_unique_name_without_email():
     store.reset_tenant()
     client.post("/api/passport", json={"name": "Robin"})
     dup = client.post("/api/passport", json={"name": "Robin"})
     assert dup.status_code == 409
-    # a badge id disambiguates, so the same name is allowed with a badge
-    ok = client.post("/api/passport", json={"name": "Robin", "badge_id": "AI4-999"})
+    # an email disambiguates, so the same name is allowed with one
+    ok = client.post("/api/passport", json={"name": "Robin", "email": "robin@corp.com"})
     assert ok.status_code == 200
 
 
-def test_staff_award_by_player_id_and_qr_and_badge():
+def test_staff_award_by_player_id_and_qr_and_email():
     store.reset_tenant()
-    p = client.post("/api/passport", json={"name": "Sam", "badge_id": "AI4-7"}).json()
+    p = client.post("/api/passport", json={"name": "Sam", "email": "sam@corp.com"}).json()
     pid = p["id"]
     # by raw player id
     r1 = client.post("/api/staff/award", json={"target": pid, "challenge_id": "find-the-flaw"}).json()
@@ -238,13 +238,36 @@ def test_staff_award_by_player_id_and_qr_and_badge():
     r2 = client.post("/api/staff/award",
                      json={"target": f"https://booth/?p={pid}", "challenge_id": "break-the-bot"}).json()
     assert r2["player"]["stamps"] == 2
-    # by badge id
+    # by corporate email
     r3 = client.post("/api/staff/award",
-                     json={"target": "AI4-7", "challenge_id": "tame-the-agent"}).json()
+                     json={"target": "sam@corp.com", "challenge_id": "tame-the-agent"}).json()
     assert r3["player"]["stamps"] == 3
     # unknown target -> 404
     assert client.post("/api/staff/award",
                        json={"target": "nope", "challenge_id": "break-the-bot"}).status_code == 404
+
+
+STAFF_AUTH = ("TrendAIStaff", "Tr3nd8i!")
+
+
+def test_admin_endpoints_require_auth():
+    store.reset_tenant()
+    # no creds -> 401
+    assert client.post("/api/reset").status_code == 401
+    assert client.post("/api/leaderboard/new-event").status_code == 401
+    assert client.get("/api/staff/me").status_code == 401
+    # wrong creds -> 401
+    assert client.post("/api/reset", auth=("x", "y")).status_code == 401
+    # correct creds -> 200
+    assert client.get("/api/staff/me", auth=STAFF_AUTH).json()["ok"] is True
+    assert client.post("/api/reset", auth=STAFF_AUTH).status_code == 200
+
+
+def test_admin_can_set_event_name():
+    store.reset_tenant()
+    r = client.post("/api/admin/event", json={"event_name": "Test Expo · Booth 7"}, auth=STAFF_AUTH)
+    assert r.status_code == 200
+    assert client.get("/api/meta").json()["event"] == "Test Expo · Booth 7"
 
 
 def test_sqlite_persistence_roundtrip(tmp_path, monkeypatch):
@@ -252,14 +275,14 @@ def test_sqlite_persistence_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(st, "_PERSIST", True)
     monkeypatch.setattr(st, "_DB_PATH", str(tmp_path / "t.db"))
     st.reset_tenant()
-    p = st.create_passport("Persisted", "AI4-P")
+    p = st.create_passport("Persisted", "persist@corp.com")
     st.award(p["id"], "find-the-flaw")
     # simulate a restart: wipe in-memory dicts, then _load() from disk
-    st._passports.clear(); st._ledger.clear(); st._badge_index.clear()
+    st._passports.clear(); st._ledger.clear(); st._email_index.clear()
     st._load()
     assert p["id"] in st._passports
     assert st._passports[p["id"]]["points"] > 0
-    assert st.get_by_badge("AI4-P") is not None
+    assert st.get_by_email("persist@corp.com") is not None
     assert st.leaderboard("event")[0]["name"] == "Persisted"
 
 

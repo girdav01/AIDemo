@@ -105,20 +105,19 @@ function renderHumanCheck(msg) {
 $("#startBtn").onclick = async () => {
   if (!state.humanOK) { alert("Please complete the human check first."); return; }
   const name = $("#nameInput").value.trim() || "Anonymous";
-  const badge_id = $("#badgeInput").value.trim();
+  const email = $("#emailInput").value.trim();
   try {
-    const p = await api("/api/passport", { name, badge_id, human_verified: true });
+    const p = await api("/api/passport", { name, email, human_verified: true });
     setPlayer(p);
   } catch (e) {
-    alert(e.message); // e.g. screen name taken — pick another or add your badge ID
+    alert(e.message); // e.g. screen name taken — pick another or add your corporate email
   }
 };
 $("#newBtn").onclick = () => { localStorage.removeItem("v1_pid"); state.pid = null; state.me = null; location.reload(); };
-$("#resetBtn").onclick = async () => {
-  if (!confirm("Reset the whole demo tenant (all players + log)?")) return;
-  await api("/api/reset", {});
-  localStorage.removeItem("v1_pid");
-  location.reload();
+$("#logToggle").onclick = () => {
+  const wrap = $("#logWrap");
+  const hidden = wrap.classList.toggle("hidden");
+  $("#logToggle").textContent = hidden ? "Show" : "Hide";
 };
 $("#closePanel").onclick = () => { $("#panel").classList.add("hidden"); state.active = null; };
 

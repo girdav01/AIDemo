@@ -17,8 +17,7 @@
     </div>
     <div class="marquee" id="marquee" aria-live="polite"><span id="marqueeText"></span></div>
     <div class="taglines">
-      <div><b>Can you break the bot?</b></div>
-      <div>Don't just build AI. <b>Secure it.</b> · AI Fearlessly</div>
+      <div class="tagmain">Don't just build AI. <b>Secure it.</b> · AI Fearlessly</div>
       <div id="botmode" class="muted"></div>
     </div>
   </header>
@@ -31,7 +30,7 @@
         <div class="passport-bar" id="passportBar">
           <div class="humanwarn">⚠️ Humans only — no AI agents, bots, or automated entries. Prove you're human to enter.</div>
           <input id="nameInput" placeholder="Pick a screen name" maxlength="40" />
-          <input id="badgeInput" placeholder="AI4 badge ID (optional — scan or type)" maxlength="64" />
+          <input id="emailInput" type="email" placeholder="Corporate email (optional — keeps your score across devices)" maxlength="120" />
           <div class="humancheck" id="humanCheck"></div>
           <button id="startBtn" disabled>Start passport</button>
           <span class="muted">Clear one challenge in each layer (Visibility · Control · Governance) to enter the draw.</span>
@@ -74,17 +73,23 @@
         </div>
       </div>
       <div class="card" style="margin-top:16px">
-        <h2>📡 Activity log</h2>
-        <div class="muted" style="font-size:12px;margin-bottom:6px">
-          AI Guard blocked / redacted / denied events — the booth timeline.
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0">📡 Activity log</h2>
+          <button class="ghost" id="logToggle">Show</button>
         </div>
-        <div id="log"><div class="muted">No activity yet.</div></div>
+        <div id="logWrap" class="hidden">
+          <div class="muted" style="font-size:12px;margin:8px 0 6px">
+            AI Guard blocked / redacted / denied events — the booth timeline.
+          </div>
+          <div id="log"><div class="muted">No activity yet.</div></div>
+        </div>
       </div>
       <div class="card" style="margin-top:16px">
         <h2>🛠 Staff</h2>
-        <button class="ghost" id="resetBtn">Reset demo tenant</button>
+        <a class="pill" href="/admin" target="_blank">Open staff admin ↗</a>
         <div class="muted" style="font-size:12px;margin-top:8px">
-          Synthetic data only. Confirm AI Guard is ON at shift start.
+          Synthetic data only. Confirm AI Guard is ON at shift start. Resets and
+          leaderboard windows live in the authenticated staff admin.
         </div>
       </div>
     </aside>

@@ -24,7 +24,7 @@ _DB_PATH = os.environ.get("BOOTH_DB", "booth_state.db")
 
 
 class NameTakenError(Exception):
-    """Raised when an explicit screen name is already in use (no badge given)."""
+    """Raised when an explicit screen name is already in use (no email given)."""
 
 # challenge_id -> base points awarded for a clear (stamp value)
 CLEAR_POINTS = {
@@ -43,11 +43,22 @@ WINDOWS = ("hour", "day", "event")
 
 _lock = threading.RLock()
 _passports: Dict[str, Dict] = {}
-_badge_index: Dict[str, str] = {}   # AI4 badge_id -> player_id (stable identity)
+_email_index: Dict[str, str] = {}   # corporate email -> player_id (stable identity)
 _events: List[Dict] = []
 _ledger: List[Dict] = []      # [{player_id, name, points, at}] — point-earning record
 _day_start: float = 0.0       # manual "new day" marker (0 = use clock day)
 _event_start: float = 0.0     # manual "new event" marker (0 = all-time)
+_settings: Dict[str, str] = {}   # editable runtime settings (e.g. event_name)
+
+
+def get_setting(key: str, default: str = "") -> str:
+    return _settings.get(key, default)
+
+
+def set_setting(key: str, value: str) -> None:
+    with _lock:
+        _settings[key] = value
+        _save()
 
 
 def _layers_covered(stamps: Dict) -> set:
@@ -59,33 +70,33 @@ def _now() -> float:
     return time.time()
 
 
-def create_passport(name: str, badge_id: str = "", human_verified: bool = True) -> Dict:
-    """Create a passport, or resume an existing one when an AI4 badge ID is
+def create_passport(name: str, email: str = "", human_verified: bool = True) -> Dict:
+    """Create a passport, or resume an existing one when a corporate email is
     supplied and already known (same player across devices / a return visit)."""
     with _lock:
-        badge = (badge_id or "").strip()[:64]
-        if badge and badge in _badge_index:
-            existing = _passports.get(_badge_index[badge])
+        em = (email or "").strip().lower()[:120]
+        if em and em in _email_index:
+            existing = _passports.get(_email_index[em])
             if existing is not None:
                 if name.strip():
                     existing["name"] = name.strip()[:40]
                     _save()
                 return existing
         clean = name.strip()[:40]
-        # Without a badge, enforce unique screen names (badge IDs disambiguate
+        # Without an email, enforce unique screen names (email disambiguates
         # otherwise). "Anonymous" is exempt.
-        if not badge and clean and clean.lower() != "anonymous":
+        if not em and clean and clean.lower() != "anonymous":
             for q in _passports.values():
                 if q["name"].lower() == clean.lower():
                     raise NameTakenError(
                         f"Screen name '{clean}' is taken — pick another or add "
-                        "your AI4 badge ID."
+                        "your corporate email."
                     )
         pid = uuid.uuid4().hex[:8]
         p = {
             "id": pid,
             "name": name.strip()[:40] or "Anonymous",
-            "badge_id": badge,     # stored to identify players; never shown publicly
+            "email": em,           # stored to identify players; never shown publicly
             "human_verified": bool(human_verified),
             "points": 0,
             "stamps": {},          # challenge_id -> {points, at}
@@ -95,8 +106,8 @@ def create_passport(name: str, badge_id: str = "", human_verified: bool = True) 
             "created_at": _now(),
         }
         _passports[pid] = p
-        if badge:
-            _badge_index[badge] = pid
+        if em:
+            _email_index[em] = pid
         _save()
         return p
 
@@ -105,8 +116,8 @@ def get_passport(pid: str) -> Optional[Dict]:
     return _passports.get(pid)
 
 
-def get_by_badge(badge_id: str) -> Optional[Dict]:
-    pid = _badge_index.get((badge_id or "").strip()[:64])
+def get_by_email(email: str) -> Optional[Dict]:
+    pid = _email_index.get((email or "").strip().lower()[:120])
     return _passports.get(pid) if pid else None
 
 
@@ -220,7 +231,7 @@ def reset_tenant() -> None:
     nuclear option)."""
     with _lock:
         _passports.clear()
-        _badge_index.clear()
+        _email_index.clear()
         _events.clear()
         _ledger.clear()
         global _day_start, _event_start
@@ -264,8 +275,8 @@ def _db():
 
 
 def _save() -> None:
-    """Write the durable state (passports w/o ephemeral sessions, ledger, badge
-    index, markers). Called under _lock after every mutation."""
+    """Write the durable state (passports w/o ephemeral sessions, ledger, email
+    index, markers, settings). Called under _lock after every mutation."""
     if not _PERSIST:
         return
     try:
@@ -276,8 +287,9 @@ def _save() -> None:
         blob = {
             "passports": slim,
             "ledger": _ledger,
-            "badge_index": _badge_index,
+            "email_index": _email_index,
             "markers": {"day_start": _day_start, "event_start": _event_start},
+            "settings": _settings,
         }
         conn = _db()
         conn.execute(
@@ -306,7 +318,8 @@ def _load() -> None:
             p.setdefault("sessions", {})
             _passports[pid] = p
         _ledger.extend(blob.get("ledger", []))
-        _badge_index.update(blob.get("badge_index", {}))
+        _email_index.update(blob.get("email_index", blob.get("badge_index", {})))
+        _settings.update(blob.get("settings", {}))
         m = blob.get("markers", {})
         _day_start = m.get("day_start", 0.0)
         _event_start = m.get("event_start", 0.0)

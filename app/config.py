@@ -28,3 +28,12 @@ PORT: int = int(_get("PORT", "8000") or "8000")
 EVENT_NAME = "Ai4 2026 · The Venetian, Las Vegas"
 PRODUCT_NAME = "TrendAI Vision One"
 APP_TITLE = "TrendAI Vision One AI Security Challenge"
+
+# Staff admin credentials (override via env in production booths).
+STAFF_USER = _get("STAFF_USER", "TrendAIStaff")
+STAFF_PASS = _get("STAFF_PASS", "Tr3nd8i!")
+
+# Public base URL the booth is reachable at from attendee phones (e.g.
+# http://192.168.1.50:8000). Used for e-passport QR codes so they don't encode
+# "localhost". Leave blank to use whatever origin the page was opened with.
+BOOTH_URL = _get("BOOTH_URL", "").rstrip("/")

@@ -102,16 +102,24 @@ can earn a real bypass.
 
 ### Player identity, staff awards, persistence
 
-- **AI4 badge ID (optional).** At registration an attendee can add their badge ID
-  (type it, or a USB/camera scanner types it into the field). The badge is a
-  **stable identity**: scanning it again — on another device or a return visit —
-  resumes the same passport instead of creating a duplicate. Badge IDs are stored
-  to identify players and are **never shown on the public leaderboard**.
-- **Unique screen names.** Without a badge, screen names must be unique (a badge
+- **Corporate email (optional).** At registration an attendee can add their email.
+  It's a **stable identity**: entering it again — on another device or a return
+  visit — resumes the same passport instead of creating a duplicate
+  (case-insensitive). Emails are stored to identify players and are **never shown
+  on the public leaderboard**.
+- **Unique screen names.** Without an email, screen names must be unique (an email
   disambiguates, so the same name is allowed alongside one). `"Anonymous"` is exempt.
 - **Staff-awarded clears.** `/staff` is a station-tablet view: scan the attendee's
-  e-passport QR (or enter their player/badge id), pick the station, and mark it
-  cleared — handy when the staffer drives the win instead of the attendee's phone.
+  e-passport QR (or enter their player id / corporate email), pick the station, and
+  mark it cleared — handy when the staffer drives the win.
+- **Staff admin (`/admin`).** Authenticated page for the destructive controls —
+  **Reset demo tenant**, **New day** / **New event** leaderboard windows, and the
+  **event subtitle**. HTTP Basic auth; default `TrendAIStaff` / `Tr3nd8i!` (override
+  via `STAFF_USER` / `STAFF_PASS`). Those endpoints return 401 without auth.
+- **Activity log** is hidden by default on `/` — a **Show/Hide** toggle reveals the
+  blocked/redacted/denied timeline.
+- **e-passport QR.** Set `BOOTH_URL` to the booth's reachable URL (e.g. the LAN IP)
+  so the personal QR resolves on phones instead of encoding `localhost`.
 - **Persistence.** Set `BOOTH_PERSIST=1` (default in `run.sh`) to write passports +
   the points ledger to SQLite (`BOOTH_DB`, default `booth_state.db`), so a restart
   doesn't wipe the board. Off by default in dev/tests (pure in-memory).
@@ -144,11 +152,12 @@ Station cards stay **physical** (handy at each station); the passport does not.
 
 ## Booth ops
 
-- **Reset demo tenant** (Staff panel) clears all players + the activity log — use
-  at each happy-hour break. Confirm AI Guard is ON at shift start and after every
-  Break-the-Bot reveal (the toggle defaults back to ON per attendee).
-- **Activity log** in the sidebar is the blocked-/redacted-/denied-event timeline
-  — the compliance story for HIPAA / PCI / OSFI.
+- **Reset demo tenant** lives on the authenticated **`/admin`** page (clears all
+  players + the activity log) — use at each happy-hour break. Confirm AI Guard is
+  ON at shift start and after every Break-the-Bot reveal (the toggle defaults back
+  to ON per attendee).
+- **Activity log** (Show/Hide toggle in the sidebar) is the
+  blocked-/redacted-/denied-event timeline — the compliance story for HIPAA / PCI / OSFI.
 - **Big-screen view** (`/screen`) auto-refreshes the leaderboard + How to Play,
   and can play the **Malicious Skill attractor video** during quiet spells:
   press **V** (or the button) to toggle, `?video=1` to start on the video,

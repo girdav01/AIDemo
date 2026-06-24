@@ -2,9 +2,11 @@
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 const ICONS = {
   "break-the-bot": "🤖", "stop-the-leak": "🛡️", "find-the-flaw": "🔍",
-  "shadow-ai": "👁️", "tame-the-agent": "⚙️", "boss-level": "🏁",
+  "trace-the-poison": "🧪", "shadow-ai": "👁️", "tame-the-agent": "⚙️",
+  "watch-mcp-wire": "🔌", "boss-level": "🏁",
 };
 let CH = [];
+let BASE = "";   // public booth URL for QR (so it doesn't encode localhost)
 
 function pid() {
   return new URLSearchParams(location.search).get("p") || localStorage.getItem("v1_pid");
@@ -15,6 +17,7 @@ async function load() {
   if (!id) { document.getElementById("loading").textContent = "No passport found. Start one at the booth."; return; }
   try {
     if (!CH.length) CH = (await (await fetch("/api/challenges")).json()).challenges;
+    if (!BASE) { try { BASE = (await (await fetch("/api/meta")).json()).base_url || ""; } catch (e) {} }
     const p = await (await fetch("/api/passport/" + id)).json();
     const lb = (await (await fetch("/api/leaderboard")).json()).leaderboard;
     render(p, lb);
@@ -45,12 +48,13 @@ function render(p, lb) {
     const on = !!(p.stamps || {})[c.id];
     const pts = on ? p.stamps[c.id].points : 0;
     return `<div class="st ${on ? "on" : ""}">
-      <div class="ic">${on ? ICONS[c.id] : "○"}</div>
+      <div class="ic">${on ? (ICONS[c.id] || "✔") : "○"}</div>
       <div class="nm">${esc(c.name)}</div>
       <div class="tk">${on ? "+" + pts : ""}</div></div>`;
   }).join("");
 
-  const url = location.origin + "/?p=" + p.id;
+  const base = (BASE || location.origin).replace(/\/$/, "");
+  const url = base + "/?p=" + p.id;
   document.getElementById("qr").src = "/api/qr?data=" + encodeURIComponent(url);
 }
 
