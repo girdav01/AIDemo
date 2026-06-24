@@ -16,6 +16,7 @@ import qrcode
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 RED = HexColor("#d71920")
@@ -23,6 +24,10 @@ DARK = HexColor("#0d1117")
 MUTED = HexColor("#5a6573")
 GOLD = HexColor("#b8860b")
 W, H = LETTER
+
+# TrendAI mark (red, transparent bg) — drawn with mask='auto' so it shows on any color.
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "logo.png")
+LOGO = ImageReader(LOGO_PATH) if os.path.exists(LOGO_PATH) else None
 
 # Visibility -> Control -> Governance spine (Boss Level is the capstone).
 LAYER_BY_NUM = {1: "Control", 2: "Control", 3: "Visibility", 4: "Visibility",
@@ -228,8 +233,11 @@ def station_cards(path):
         section("RESET")
         y = _wrap(c, card["reset"], m, y, W - 2 * m, 14)
 
+        if LOGO is not None:
+            c.drawImage(LOGO, m, 0.4 * inch, width=0.28 * inch, height=0.28 * inch, mask="auto")
         c.setFillColor(MUTED); c.setFont("Helvetica-Oblique", 9)
-        c.drawString(m, 0.5 * inch, "Synthetic data only. Confirm AI Guard is ON at shift start and after every reveal.")
+        c.drawString(m + 0.38 * inch, 0.5 * inch,
+                     "Synthetic data only. Confirm AI Guard is ON at shift start and after every reveal.")
         c.drawRightString(W - m, 0.5 * inch, "TrendAI Vision One™ AI Security Challenge · Ai4 2026")
         c.showPage()
     c.save()
@@ -238,10 +246,13 @@ def station_cards(path):
 def poster(path, url):
     c = canvas.Canvas(path, pagesize=LETTER)
     c.setFillColor(DARK); c.rect(0, 0, W, H, fill=1, stroke=0)
+    if LOGO is not None:
+        c.drawImage(LOGO, W / 2 - 0.5 * inch, H - 1.3 * inch, width=1.0 * inch,
+                    height=1.0 * inch, mask="auto", preserveAspectRatio=True)
     c.setFillColor(RED); c.setFont("Helvetica-Bold", 40)
-    c.drawCentredString(W / 2, H - 1.5 * inch, "AI Security Challenge")
+    c.drawCentredString(W / 2, H - 1.9 * inch, "AI Security Challenge")
     c.setFillColor(HexColor("#e6edf3")); c.setFont("Helvetica", 18)
-    c.drawCentredString(W / 2, H - 2.0 * inch, "TrendAI Vision One™ · Can you break the bot?")
+    c.drawCentredString(W / 2, H - 2.4 * inch, "TrendAI Vision One™ · Can you break the bot?")
 
     c.setFont("Helvetica-Bold", 26)
     c.drawCentredString(W / 2, H - 3.0 * inch, "Scan to start your e-passport")
