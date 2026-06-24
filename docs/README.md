@@ -6,6 +6,9 @@ Project documentation for the **TrendAI Vision One AI Security Challenge** booth
   challenge**: what to provision, the synthetic content to plant, the policies to
   configure, and how each maps to the booth app's "clears when" condition. Start
   with `vision-one-setup/00-overview.md`.
+- `booth-staff-quickstart.md` — **operating guide for booth staff**: the four
+  screens, registration, staff-driven awards (`/staff`), leaderboard windows, and
+  resets.
 - Add your own design docs, scripts, and reference material in this folder.
 
 The booth web app in this repo is a **self-contained simulation** of all eight
