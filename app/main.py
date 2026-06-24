@@ -37,7 +37,7 @@ STATIC_DIR = __file__.rsplit("/", 2)[0] + "/static"
 # Models
 # --------------------------------------------------------------------------- #
 class CreatePassport(BaseModel):
-    name: str = "Anonymous"
+    name: str = ""
     email: str = ""              # corporate email — stable identity (optional)
     human_verified: bool = True  # booth human-check attestation (client gate)
 
@@ -185,6 +185,8 @@ def create_passport(body: CreatePassport):
     # (same player across devices / a returning attendee) instead of duplicating.
     try:
         return store.create_passport(body.name, body.email, body.human_verified)
+    except store.NameRequiredError as e:
+        raise HTTPException(400, str(e))
     except store.NameTakenError as e:
         raise HTTPException(409, str(e))
 

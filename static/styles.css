@@ -29,7 +29,7 @@ header.app {
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand .logo {
   width: 40px; height: 40px; border-radius: 9px;
-  background: #0b0b0d; border: 1px solid var(--line);
+  background: #0b0b0d;
   display: grid; place-items: center;
 }
 .brand .logo img { width: 28px; height: 28px; display: block; }

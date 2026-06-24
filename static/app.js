@@ -104,7 +104,8 @@ function renderHumanCheck(msg) {
 
 $("#startBtn").onclick = async () => {
   if (!state.humanOK) { alert("Please complete the human check first."); return; }
-  const name = $("#nameInput").value.trim() || "Anonymous";
+  const name = $("#nameInput").value.trim();
+  if (!name) { alert("Please enter your name to start."); $("#nameInput").focus(); return; }
   const email = $("#emailInput").value.trim();
   try {
     const p = await api("/api/passport", { name, email, human_verified: true });

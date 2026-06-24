@@ -202,6 +202,15 @@ def test_banners_endpoint():
     assert any("Red Teaming" in m for m in b["messages"])
 
 
+def test_anonymous_not_allowed():
+    store.reset_tenant()
+    assert client.post("/api/passport", json={"name": ""}).status_code == 400
+    assert client.post("/api/passport", json={"name": "   "}).status_code == 400
+    assert client.post("/api/passport", json={"name": "Anonymous"}).status_code == 400
+    assert client.post("/api/passport", json={}).status_code == 400
+    assert client.post("/api/passport", json={"name": "Real Person"}).status_code == 200
+
+
 def test_human_verified_recorded():
     store.reset_tenant()
     p = client.post("/api/passport", json={"name": "HumanA", "human_verified": True}).json()
