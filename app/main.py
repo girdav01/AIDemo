@@ -476,6 +476,11 @@ def _companion_summary(pid: str) -> str:
 # --------------------------------------------------------------------------- #
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# Optional video assets (e.g. the Malicious Skill attractor) for the screen view.
+VIDEO_DIR = __file__.rsplit("/", 2)[0] + "/video"
+if __import__("os").path.isdir(VIDEO_DIR):
+    app.mount("/video", StaticFiles(directory=VIDEO_DIR), name="video")
+
 
 @app.get("/")
 def index():

@@ -126,9 +126,22 @@ Station cards stay **physical** (handy at each station); the passport does not.
   Break-the-Bot reveal (the toggle defaults back to ON per attendee).
 - **Activity log** in the sidebar is the blocked-/redacted-/denied-event timeline
   — the compliance story for HIPAA / PCI / OSFI.
-- **Big-screen view** (`/screen`) auto-refreshes the leaderboard + How to Play.
+- **Big-screen view** (`/screen`) auto-refreshes the leaderboard + How to Play,
+  and can play the **Malicious Skill attractor video** during quiet spells:
+  press **V** (or the button) to toggle, `?video=1` to start on the video,
+  `?video=auto` to auto-cycle video ↔ leaderboard. Drop the file at
+  `video/malicious-skill.mp4` (see `video/README.md`). Staff hook: *"That's a
+  malicious agent skill getting caught — want to try it?"* → Tame the Agent (#6)
+  or Watch the MCP Wire (#7).
 - All stations are pre-loaded (scan results, agent runs, discovery view) for zero
   wait time.
+
+## Vision One build instructions
+
+`docs/vision-one-setup/` documents **what to provision on the Vision One side**
+for each challenge to run live (capability, synthetic content, policy config,
+clears-when mapping, reset, and fallback). Start with `00-overview.md`. The booth
+app is a self-contained simulation; these docs describe the real demos it mirrors.
 
 ---
 
@@ -150,7 +163,13 @@ app/
   main.py           FastAPI routes + static serving
 static/
   index.html app.js styles.css   attendee + staff UI
-  screen.html                    big-screen leaderboard
+  passport.html passport.js      electronic passport (mobile wallet)
+  screen.html                    big-screen leaderboard + attractor video
+tools/
+  generate_pdfs.py               station cards + booth poster PDFs
+docs/
+  vision-one-setup/              per-challenge Vision One build instructions
+video/                           booth video assets (Malicious Skill attractor)
 tests/
   test_challenges.py             end-to-end tests for all eight stations
 ```

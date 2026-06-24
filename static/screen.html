@@ -19,6 +19,25 @@
     .how li { font-size: 20px; margin: 10px 0; }
     .stat { margin-top: 24px; font-size: 22px; color: var(--gold); text-align: center; }
     .foot { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; color: var(--muted); }
+    .foot button { font-size: 14px; padding: 6px 12px; margin-left: 10px; }
+
+    /* Attractor video overlay */
+    #attractor { position: fixed; inset: 0; background: #000; z-index: 50;
+      display: none; align-items: center; justify-content: center; }
+    #attractor.on { display: flex; }
+    #attractor video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .nowplaying { position: fixed; top: 24px; left: 24px; z-index: 51;
+      background: rgba(215,25,32,.9); color: #fff; font-weight: 800; font-size: 20px;
+      padding: 8px 16px; border-radius: 8px; letter-spacing: .5px; }
+    .nowplaying .dot { color: #fff; animation: blink 1.2s steps(2,start) infinite; }
+    @keyframes blink { to { visibility: hidden; } }
+    .att-cta { position: fixed; bottom: 28px; left: 0; right: 0; z-index: 51; text-align: center;
+      color: #fff; font-size: 26px; font-weight: 700; text-shadow: 0 2px 12px #000; }
+    .att-cta .red { color: var(--trend-red); }
+    .att-controls { position: fixed; top: 24px; right: 24px; z-index: 51; display: flex; gap: 8px; }
+    #novideo { position: fixed; inset: 0; z-index: 49; display: none; place-items: center;
+      text-align: center; color: var(--muted); }
+    #novideo.on { display: grid; }
   </style>
 </head>
 <body>
@@ -37,16 +56,75 @@
         <ol>
           <li>Grab a Challenge Passport at the counter.</li>
           <li>Clear any station in ~5 minutes with a TrendAI guide.</li>
-          <li>Earn a stamp for every challenge you beat.</li>
+          <li>Earn a stamp in each pillar — Visibility · Control · Governance.</li>
           <li>Watch your name climb this leaderboard.</li>
-          <li>Top scores each day win — a full passport enters the grand-prize draw.</li>
+          <li>One per pillar fills your passport and enters the grand-prize draw.</li>
         </ol>
         <div class="stat">Only 37% of organizations test their AI before they ship it. Be the exception.</div>
       </div>
     </div>
   </div>
-  <div class="foot">Beat one → swag · Full passport → premium swag + draw · Daily top 3 at 4 PM · Boss Level → “AI Fearlessly” coin</div>
+
+  <div class="foot">
+    Beat one → swag · Full passport (one per pillar) → premium swag + draw · Daily top 3 at 4 PM
+    <button id="playBtn">▶ Malicious Skill video</button>
+  </div>
+
+  <!-- Attractor video overlay -->
+  <div id="attractor">
+    <div class="nowplaying">● NOW PLAYING · Malicious Skill <span class="dot">●</span></div>
+    <div class="att-controls">
+      <button id="muteBtn" class="ghost">🔊 Unmute</button>
+      <button id="closeBtn" class="ghost">✕ Close (Esc)</button>
+    </div>
+    <video id="vid" loop muted autoplay playsinline></video>
+    <div class="att-cta">That's a malicious agent skill getting caught — <span class="red">want to try it?</span></div>
+  </div>
+  <div id="novideo">
+    <div>
+      <h2>Malicious Skill video not found</h2>
+      <p>Drop the file at <code>video/malicious-skill.mp4</code> in the repo
+        (or pass <code>?src=/video/&lt;file&gt;.mp4</code>).</p>
+    </div>
+  </div>
+
   <script>
+    const params = new URLSearchParams(location.search);
+    const VIDEO_SRC = params.get("src") || "/video/malicious-skill.mp4";
+    const att = document.getElementById("attractor");
+    const novideo = document.getElementById("novideo");
+    const vid = document.getElementById("vid");
+    let autoCycle = params.get("video") === "auto"; // alternate video <-> leaderboard
+
+    function showVideo(on) {
+      att.classList.toggle("on", on && vid.dataset.ok === "1");
+      novideo.classList.toggle("on", on && vid.dataset.ok !== "1");
+      if (on && vid.dataset.ok === "1") { vid.currentTime = vid.currentTime || 0; vid.play().catch(() => {}); }
+      else { vid.pause(); }
+    }
+    // probe the file
+    vid.src = VIDEO_SRC;
+    vid.addEventListener("loadeddata", () => { vid.dataset.ok = "1"; });
+    vid.addEventListener("error", () => { vid.dataset.ok = "0"; if (att.classList.contains("on") || novideo.classList.contains("on")) showVideo(true); });
+
+    document.getElementById("playBtn").onclick = () => showVideo(true);
+    document.getElementById("closeBtn").onclick = () => showVideo(false);
+    document.getElementById("muteBtn").onclick = () => {
+      vid.muted = !vid.muted;
+      document.getElementById("muteBtn").textContent = vid.muted ? "🔊 Unmute" : "🔇 Mute";
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") showVideo(false);
+      if (e.key.toLowerCase() === "v") showVideo(!att.classList.contains("on"));
+    });
+
+    if (params.get("video") === "1" || autoCycle) showVideo(true);
+    // Auto-cycle: video ~45s, leaderboard ~30s, repeat (quiet-spell attractor loop)
+    if (autoCycle) {
+      let showing = true;
+      setInterval(() => { showing = !showing; showVideo(showing); }, showing ? 45000 : 30000);
+    }
+
     async function tick() {
       try {
         const r = await fetch("/api/leaderboard"); const { leaderboard } = await r.json();
