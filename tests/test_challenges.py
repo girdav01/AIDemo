@@ -279,6 +279,33 @@ def test_admin_can_set_event_name():
     assert client.get("/api/meta").json()["event"] == "Test Expo · Booth 7"
 
 
+def test_hint_mode_defaults_beginner_and_toggles():
+    store.reset_tenant()
+    store.set_setting("hint_mode", "beginner")  # ensure known starting state
+    assert client.get("/api/meta").json()["hint_mode"] == "beginner"
+    # staff toggles to advanced
+    r = client.post("/api/admin/hint-mode", json={"hint_mode": "advanced"}, auth=STAFF_AUTH)
+    assert r.status_code == 200
+    assert r.json()["hint_mode"] == "advanced"
+    assert client.get("/api/meta").json()["hint_mode"] == "advanced"
+    assert client.get("/api/staff/me", auth=STAFF_AUTH).json()["hint_mode"] == "advanced"
+    # and back to beginner
+    client.post("/api/admin/hint-mode", json={"hint_mode": "beginner"}, auth=STAFF_AUTH)
+    assert client.get("/api/meta").json()["hint_mode"] == "beginner"
+
+
+def test_hint_mode_requires_auth_and_validates():
+    store.reset_tenant()
+    assert client.post("/api/admin/hint-mode", json={"hint_mode": "advanced"}).status_code == 401
+    bad = client.post("/api/admin/hint-mode", json={"hint_mode": "nope"}, auth=STAFF_AUTH)
+    assert bad.status_code == 400
+
+
+def test_every_challenge_has_advanced_hint():
+    chs = client.get("/api/challenges").json()["challenges"]
+    assert all(c.get("adv_hint") for c in chs)
+
+
 def test_sqlite_persistence_roundtrip(tmp_path, monkeypatch):
     from app import store as st
     monkeypatch.setattr(st, "_PERSIST", True)

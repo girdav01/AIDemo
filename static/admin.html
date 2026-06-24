@@ -40,6 +40,15 @@
           <code>/</code>). Updates live for new page loads.</p>
         <input id="eventName" class="big" placeholder="Ai4 2026 · The Venetian, Las Vegas" />
         <div class="row" style="margin-top:10px"><button id="saveEvent">Save event subtitle</button></div>
+        <h2 style="margin-top:18px">Hint difficulty</h2>
+        <p class="muted" style="font-size:13px"><b>Beginner</b> shows the obvious starter
+          hints. <b>Advanced</b> hides them and reveals only a single limited hint after
+          <b>3 attempts</b> on a challenge. Applies to new page loads.</p>
+        <div class="row" style="align-items:center;gap:12px">
+          <label class="toggle" style="margin:0"><input type="checkbox" id="advMode" />
+            Advanced mode (limited hints)</label>
+          <span id="hintModeNow" class="pill"></span>
+        </div>
         <h2 style="margin-top:18px">Leaderboard windows</h2>
         <div class="row">
           <button id="newDay">Start new day</button>
@@ -71,6 +80,13 @@
       document.getElementById("adminCard").classList.remove("hidden");
       document.getElementById("who").textContent = data.user;
       document.getElementById("eventName").value = data.event_name || "";
+      setHintModeUI(data.hint_mode || "beginner");
+    }
+    function setHintModeUI(mode) {
+      const adv = mode === "advanced";
+      document.getElementById("advMode").checked = adv;
+      const pill = document.getElementById("hintModeNow");
+      pill.textContent = adv ? "Advanced — limited hints" : "Beginner — full hints";
     }
     async function tryRestore() {
       if (!authHeader) return;
@@ -119,6 +135,23 @@
         if (!r.ok) throw new Error(d.detail || "Failed");
         res.innerHTML = `<div class="banner good">${esc(d.message)} (“${esc(d.event_name)}”)</div>`;
       } catch (e) { res.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; }
+    };
+    document.getElementById("advMode").onchange = async (e) => {
+      const mode = e.target.checked ? "advanced" : "beginner";
+      const res = document.getElementById("res");
+      try {
+        const r = await authed("/api/admin/hint-mode", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hint_mode: mode }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "Failed");
+        setHintModeUI(d.hint_mode);
+        res.innerHTML = `<div class="banner good">${esc(d.message)}</div>`;
+      } catch (err) {
+        e.target.checked = !e.target.checked; // revert on failure
+        res.innerHTML = `<div class="banner bad">${esc(err.message)}</div>`;
+      }
     };
     document.getElementById("newDay").onclick = () => action("/api/leaderboard/new-day");
     document.getElementById("newEvent").onclick = () =>

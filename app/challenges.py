@@ -21,6 +21,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Jailbreak a live chatbot to leak a planted secret.",
         "clears_when": "AI Guard blocks you and logs the attempt.",
         "starters": seed.BREAK_THE_BOT_STARTERS,
+        "adv_hint": "Chain two turns: set up a roleplay, then pivot with an "
+                    "'ignore previous instructions' override to chase the secret.",
     },
     {
         "id": "stop-the-leak",
@@ -33,6 +35,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Coax the app into spilling fake PII or source code.",
         "clears_when": "AI Guard redacts the sensitive data in real time.",
         "starters": seed.STOP_THE_LEAK_STARTERS,
+        "adv_hint": "Ask the app to export or list a record — the customer file "
+                    "or the config — so a redactable field is in the response.",
     },
     {
         "id": "find-the-flaw",
@@ -45,6 +49,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Run AI Scanner on a vulnerable model pre-deploy.",
         "clears_when": "You name the OWASP LLM risk behind the top finding.",
         "starters": [],
+        "adv_hint": "The top finding is the highest-severity row (rank 1). Map it "
+                    "to its OWASP LLM Top-10 code.",
     },
     {
         "id": "trace-the-poison",
@@ -57,6 +63,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Catch a hardcoded secret + bad dependency, trace it via the SBOM.",
         "clears_when": "You name the secret, the bad dependency, and a downstream app.",
         "starters": [],
+        "adv_hint": "Cross-reference the Findings (the secret + the bad dependency) "
+                    "with the flagged SBOM row to name the downstream app.",
     },
     {
         "id": "shadow-ai",
@@ -69,6 +77,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Spot unsanctioned GenAI use, then set a policy.",
         "clears_when": "Your policy blocks the next risky prompt.",
         "starters": [],
+        "adv_hint": "Count only the rows marked unsanctioned, then apply a policy "
+                    "to the tool with the highest risk.",
     },
     {
         "id": "tame-the-agent",
@@ -81,6 +91,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Push a rogue agent toward an unauthorized action.",
         "clears_when": "Governance denies it — with a full audit trail.",
         "starters": [],
+        "adv_hint": "Keep the governance policy ENABLED and run the task — watch "
+                    "which tool call the policy denies.",
     },
     {
         "id": "watch-mcp-wire",
@@ -93,6 +105,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Spot a rogue MCP tool-call at the gateway and block it.",
         "clears_when": "The disallowed MCP call is blocked at the gateway and logged.",
         "starters": [],
+        "adv_hint": "One call reaches an unapproved server or steps outside its "
+                    "approved scope. Block that one.",
     },
     {
         "id": "boss-level",
@@ -105,6 +119,8 @@ CHALLENGES: List[Dict] = [
         "mission": "Speed-run scan → protect → validate → improve.",
         "clears_when": "All four steps done before the timer ends.",
         "starters": [],
+        "adv_hint": "Tap all four loop steps before the timer runs out: "
+                    "scan → protect → validate → improve.",
     },
 ]
 
