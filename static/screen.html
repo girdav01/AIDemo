@@ -35,6 +35,12 @@
     .att-cta { position: fixed; bottom: 28px; left: 0; right: 0; z-index: 51; text-align: center;
       color: #fff; font-size: 26px; font-weight: 700; text-shadow: 0 2px 12px #000; }
     .att-cta .red { color: var(--trend-red); }
+    .smarquee { text-align: center; margin: -8px auto 22px; min-height: 32px; padding: 0 40px; }
+    .smarquee span { display: inline-block; font-size: 24px; font-weight: 700; color: var(--gold);
+      opacity: 0; transition: opacity .5s ease; }
+    .smarquee span.show { opacity: 1; }
+    .smarquee::before { content: "📣"; margin-right: 10px; }
+    .smarquee.empty::before { content: ""; }
     .att-controls { position: fixed; top: 24px; right: 24px; z-index: 51; display: flex; gap: 8px; }
     #novideo { position: fixed; inset: 0; z-index: 49; display: none; place-items: center;
       text-align: center; color: var(--muted); }
@@ -48,6 +54,7 @@
       <h1>AI Security <span class="red">Challenge</span></h1>
       <p>TrendAI Vision One™ · Can you break the bot? · <b>Don't just build AI. Secure it.</b></p>
     </div>
+    <div class="smarquee" id="smarquee"><span id="smarqueeText"></span></div>
     <div class="cols">
       <div class="card big-lb">
         <h2>🏆 Live Leaderboard · <span id="lbLabel">Event</span></h2>
@@ -154,6 +161,24 @@
       } catch (e) {}
     }
     setTab(lbWindow); setInterval(tick, 3000);
+
+    // Rolling marketing banner (shared static/banners.yml).
+    (async function marquee() {
+      const span = document.getElementById("smarqueeText");
+      let cfg = { interval_seconds: 7, messages: [] };
+      try { cfg = await (await fetch("/api/banners")).json(); } catch (e) {}
+      const msgs = (cfg.messages || []).filter(Boolean);
+      if (!msgs.length) { document.getElementById("smarquee").classList.add("empty"); return; }
+      const interval = Math.max(3, cfg.interval_seconds || 7) * 1000;
+      let i = 0;
+      const show = () => {
+        span.classList.remove("show");
+        setTimeout(() => { span.textContent = msgs[i % msgs.length]; span.classList.add("show"); }, 500);
+        i++;
+      };
+      show();
+      if (msgs.length > 1) setInterval(show, interval);
+    })();
   </script>
 </body>
 </html>
