@@ -24,7 +24,7 @@ a { color: var(--trend-red); }
 header.app {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 28px; border-bottom: 1px solid var(--line);
-  background: linear-gradient(90deg, rgba(215,25,32,.18), transparent);
+  background: linear-gradient(90deg, transparent, rgba(215,25,32,.18));
 }
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand .logo {
@@ -37,11 +37,12 @@ header.app {
 .brand .sub { color: var(--muted); font-size: 12px; }
 .taglines { color: var(--muted); font-size: 12px; text-align: right; }
 .taglines b { color: var(--trend-red); }
+.taglines .tagmain { font-size: 18px; color: var(--text); font-weight: 600; }
 .marquee {
   flex: 1; min-width: 0; margin: 0 24px; overflow: hidden; text-align: center;
 }
 .marquee span {
-  display: inline-block; max-width: 100%; color: var(--text); font-size: 13px;
+  display: inline-block; max-width: 100%; color: var(--text); font-size: 20px;
   font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   vertical-align: middle; opacity: 0; transition: opacity .45s ease;
 }

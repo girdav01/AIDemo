@@ -4,11 +4,13 @@ Run:  uvicorn app.main:app --reload
 """
 
 import io
+import secrets
 import time
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -36,7 +38,7 @@ STATIC_DIR = __file__.rsplit("/", 2)[0] + "/static"
 # --------------------------------------------------------------------------- #
 class CreatePassport(BaseModel):
     name: str = "Anonymous"
-    badge_id: str = ""
+    email: str = ""              # corporate email — stable identity (optional)
     human_verified: bool = True  # booth human-check attestation (client gate)
 
 
@@ -65,7 +67,7 @@ class McpBlockBody(BaseModel):
 
 
 class StaffAward(BaseModel):
-    target: str          # player_id, personal-QR URL, 'badge:<id>', or badge id
+    target: str          # player_id, personal-QR URL, 'email:<addr>', or email
     challenge_id: str
 
 
@@ -101,6 +103,19 @@ def _require(pid: str):
     return p
 
 
+# Staff admin auth (HTTP Basic). Default creds in config; override via env.
+_basic = HTTPBasic(auto_error=True)
+
+
+def require_staff(cred: HTTPBasicCredentials = Depends(_basic)) -> str:
+    ok_user = secrets.compare_digest(cred.username, config.STAFF_USER)
+    ok_pass = secrets.compare_digest(cred.password, config.STAFF_PASS)
+    if not (ok_user and ok_pass):
+        raise HTTPException(401, "Invalid staff credentials",
+                            headers={"WWW-Authenticate": "Basic"})
+    return cred.username
+
+
 # --------------------------------------------------------------------------- #
 # Passport / meta
 # --------------------------------------------------------------------------- #
@@ -109,7 +124,8 @@ def meta():
     return {
         "app_title": config.APP_TITLE,
         "product": config.PRODUCT_NAME,
-        "event": config.EVENT_NAME,
+        "event": store.get_setting("event_name", config.EVENT_NAME),
+        "base_url": config.BOOTH_URL,   # used for e-passport QR (avoids localhost)
         "live_bot": config.LIVE_BOT_ENABLED,
         "model": config.ANTHROPIC_MODEL if config.LIVE_BOT_ENABLED else "offline-bot",
         "taglines": ["Can you break the bot?", "Don't just build AI. Secure it.",
@@ -165,10 +181,10 @@ def banners():
 
 @app.post("/api/passport")
 def create_passport(body: CreatePassport):
-    # If an AI4 badge ID is given and already known, resume that passport
+    # If a corporate email is given and already known, resume that passport
     # (same player across devices / a returning attendee) instead of duplicating.
     try:
-        return store.create_passport(body.name, body.badge_id, body.human_verified)
+        return store.create_passport(body.name, body.email, body.human_verified)
     except store.NameTakenError as e:
         raise HTTPException(409, str(e))
 
@@ -185,15 +201,33 @@ def leaderboard(window: str = "event"):
 
 
 @app.post("/api/leaderboard/new-day")
-def leaderboard_new_day():
+def leaderboard_new_day(_: str = Depends(require_staff)):
     store.new_day()
     return {"ok": True, "message": "New daily leaderboard window started."}
 
 
 @app.post("/api/leaderboard/new-event")
-def leaderboard_new_event():
+def leaderboard_new_event(_: str = Depends(require_staff)):
     store.new_event()
     return {"ok": True, "message": "Fresh all-conference board started."}
+
+
+@app.get("/api/staff/me")
+def staff_me(user: str = Depends(require_staff)):
+    """Verify staff credentials (used by the /admin login)."""
+    return {"ok": True, "user": user, "event_name": store.get_setting("event_name", config.EVENT_NAME)}
+
+
+class EventNameBody(BaseModel):
+    event_name: str
+
+
+@app.post("/api/admin/event")
+def set_event_name(body: EventNameBody, _: str = Depends(require_staff)):
+    """Update the upper-left event subtitle (persisted)."""
+    name = body.event_name.strip()[:120] or config.EVENT_NAME
+    store.set_setting("event_name", name)
+    return {"ok": True, "event_name": name, "message": "Event name updated."}
 
 
 @app.get("/api/qr")
@@ -214,14 +248,14 @@ def events(challenge: Optional[str] = None):
 
 
 @app.post("/api/reset")
-def reset_tenant():
+def reset_tenant(_: str = Depends(require_staff)):
     store.reset_tenant()
     return {"ok": True, "message": "Demo tenant reset. AI Guard is ON."}
 
 
 def _resolve_target(target: str):
     """Resolve a staff 'target' to a player_id. Accepts a raw player_id, a
-    personal-QR URL (…/?p=<id>), 'badge:<id>', or a bare AI4 badge id."""
+    personal-QR URL (…/?p=<id>), 'email:<addr>', or a bare corporate email."""
     from urllib.parse import urlparse, parse_qs
 
     t = (target or "").strip()
@@ -229,23 +263,23 @@ def _resolve_target(target: str):
         q = parse_qs(urlparse(t).query)
         if q.get("p"):
             t = q["p"][0]
-    if t.startswith("badge:"):
-        p = store.get_by_badge(t[6:])
+    if t.startswith("email:"):
+        p = store.get_by_email(t[6:])
         return p["id"] if p else None
     if store.get_passport(t):
         return t
-    p = store.get_by_badge(t)
+    p = store.get_by_email(t)
     return p["id"] if p else None
 
 
 @app.post("/api/staff/award")
 def staff_award(body: StaffAward):
     """Staff-driven clear: award a challenge from a station tablet by scanning the
-    attendee's personal QR or entering their player/badge id."""
+    attendee's personal QR or entering their player id / corporate email."""
     pid = _resolve_target(body.target)
     if not pid:
         raise HTTPException(404, "Player not found. Scan their e-passport QR or "
-                            "enter their player/badge id.")
+                            "enter their player id / corporate email.")
     if body.challenge_id not in challenges.CHALLENGES_BY_ID:
         raise HTTPException(400, "Unknown challenge id.")
     p = store.award(pid, body.challenge_id)
@@ -609,3 +643,9 @@ def passport_page():
 def staff_page():
     """Station tablet view: staff-award a clear by scanning the attendee's QR."""
     return FileResponse(STATIC_DIR + "/staff.html")
+
+
+@app.get("/admin")
+def admin_page():
+    """Authenticated staff admin: tenant reset + leaderboard window controls."""
+    return FileResponse(STATIC_DIR + "/admin.html")

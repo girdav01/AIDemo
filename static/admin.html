@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Admin · TrendAI Vision One</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .wrap2 { max-width: 520px; margin: 0 auto; padding: 18px; }
+    label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px; }
+    .big { font-size:16px; padding:11px; width:100%; }
+    .res { margin-top:14px; }
+    .danger { background: var(--bad); border-color: var(--bad); }
+    .danger:hover { background:#c0392b; }
+  </style>
+</head>
+<body>
+  <div class="wrap2">
+    <div class="card">
+      <div class="brand" style="margin-bottom:8px">
+        <div class="logo"><img src="/static/logo.svg" alt="TrendAI" /></div>
+        <div><h1 style="font-size:16px;margin:0">Staff Admin</h1>
+          <div class="sub muted">TrendAI Vision One™ AI Security Challenge</div></div>
+      </div>
+
+      <div id="loginCard">
+        <p class="muted" style="font-size:13px">Sign in to make changes (reset, leaderboard windows).</p>
+        <label>Username</label>
+        <input id="user" class="big" autocomplete="username" />
+        <label>Password</label>
+        <input id="pass" type="password" class="big" autocomplete="current-password" />
+        <div class="row" style="margin-top:14px"><button id="loginBtn" class="big">Sign in</button></div>
+        <div id="loginRes"></div>
+      </div>
+
+      <div id="adminCard" class="hidden">
+        <p>Signed in as <b id="who"></b> · <a href="#" id="signout">sign out</a></p>
+        <h2>Event subtitle</h2>
+        <p class="muted" style="font-size:13px">Shown in the upper-left header (e.g. on
+          <code>/</code>). Updates live for new page loads.</p>
+        <input id="eventName" class="big" placeholder="Ai4 2026 · The Venetian, Las Vegas" />
+        <div class="row" style="margin-top:10px"><button id="saveEvent">Save event subtitle</button></div>
+        <h2 style="margin-top:18px">Leaderboard windows</h2>
+        <div class="row">
+          <button id="newDay">Start new day</button>
+          <button id="newEvent">Start new event (clear board)</button>
+        </div>
+        <h2 style="margin-top:18px">Demo tenant</h2>
+        <p class="muted" style="font-size:13px">Full reset clears <b>all players, the activity
+          log, and the leaderboard</b>. Use at happy-hour breaks only.</p>
+        <div class="row"><button id="reset" class="danger">Reset demo tenant</button></div>
+        <div class="res" id="res"></div>
+      </div>
+    </div>
+    <div class="card muted" style="font-size:12px">
+      Basic booth protection only — credentials are sent over the booth network.
+      Change defaults via the <code>STAFF_USER</code> / <code>STAFF_PASS</code> env vars.
+    </div>
+  </div>
+
+  <script>
+    const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+    let authHeader = sessionStorage.getItem("v1_admin_auth") || "";
+
+    async function authed(url, opts = {}) {
+      opts.headers = Object.assign({}, opts.headers, { Authorization: authHeader });
+      return fetch(url, opts);
+    }
+    function showAdmin(data) {
+      document.getElementById("loginCard").classList.add("hidden");
+      document.getElementById("adminCard").classList.remove("hidden");
+      document.getElementById("who").textContent = data.user;
+      document.getElementById("eventName").value = data.event_name || "";
+    }
+    async function tryRestore() {
+      if (!authHeader) return;
+      try { const r = await authed("/api/staff/me"); if (r.ok) showAdmin(await r.json()); }
+      catch (e) {}
+    }
+    document.getElementById("loginBtn").onclick = async () => {
+      const u = document.getElementById("user").value.trim();
+      const p = document.getElementById("pass").value;
+      authHeader = "Basic " + btoa(u + ":" + p);
+      try {
+        const r = await authed("/api/staff/me");
+        if (!r.ok) throw new Error("Invalid credentials");
+        sessionStorage.setItem("v1_admin_auth", authHeader);
+        showAdmin(await r.json());
+      } catch (e) {
+        document.getElementById("loginRes").innerHTML =
+          '<div class="banner bad">Invalid credentials.</div>';
+        authHeader = "";
+      }
+    };
+    document.getElementById("signout").onclick = (e) => {
+      e.preventDefault(); sessionStorage.removeItem("v1_admin_auth"); authHeader = ""; location.reload();
+    };
+    async function action(url, confirmMsg) {
+      if (confirmMsg && !confirm(confirmMsg)) return;
+      const res = document.getElementById("res");
+      try {
+        const r = await authed(url, { method: "POST" });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "Failed");
+        res.innerHTML = `<div class="banner good">${esc(d.message || "Done.")}</div>`;
+      } catch (e) {
+        res.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`;
+      }
+    }
+    document.getElementById("saveEvent").onclick = async () => {
+      const ev = document.getElementById("eventName").value.trim();
+      const res = document.getElementById("res");
+      try {
+        const r = await authed("/api/admin/event", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_name: ev }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "Failed");
+        res.innerHTML = `<div class="banner good">${esc(d.message)} (“${esc(d.event_name)}”)</div>`;
+      } catch (e) { res.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; }
+    };
+    document.getElementById("newDay").onclick = () => action("/api/leaderboard/new-day");
+    document.getElementById("newEvent").onclick = () =>
+      action("/api/leaderboard/new-event", "Clear the all-conference board and start fresh?");
+    document.getElementById("reset").onclick = () =>
+      action("/api/reset", "Full reset: clears ALL players, the log, and the leaderboard. Continue?");
+    tryRestore();
+  </script>
+</body>
+</html>

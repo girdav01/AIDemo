@@ -11,6 +11,7 @@ to run registration, the stations, staff-driven awards, and the leaderboards.
 | `/screen` | Big monitor | Audience — leaderboard + Malicious Skill attractor |
 | `/passport` | Attendee's phone | Their e-passport wallet + personal QR |
 | `/staff` | Station tablet(s) | Staff award clears |
+| `/admin` | Staff (authenticated) | Reset, leaderboard windows, event subtitle |
 
 ## One-time setup (start of day)
 
@@ -30,10 +31,10 @@ to run registration, the stations, staff-driven awards, and the leaderboards.
 ## How an attendee gets registered
 
 - They scan the **poster QR** → `/` opens on their phone → type a **screen name**
-  + (optional) **AI4 badge ID** → **Start passport**.
+  + (optional) **corporate email** → **Start passport**.
 - Or a staffer registers them at the counter device the same way.
-- The badge ID is the key: if they return later or switch devices, entering the
-  same badge **resumes their passport** instead of starting over.
+- The corporate email is the key: if they return later or switch devices, entering
+  the same email **resumes their passport** instead of starting over.
 
 ## Running a station — two ways to award a clear
 
@@ -46,14 +47,14 @@ and wants to mark the win:
 
 1. On `/staff`, **scan the attendee's e-passport QR** (a USB/camera scanner types
    the URL and hits Enter → awards immediately), **or** type their **player id**
-   or **badge id** into the box.
+   or **corporate email** into the box.
 2. Pick the **station** from the dropdown (all 8 listed).
 3. **Mark cleared** → green confirmation (e.g. `Alice cleared find-the-flaw —
    50 pts, 1/8 stamps`) and it appears in **Recent awards**. The box re-focuses
    for the next person.
 
 The `/staff` box accepts any of: the QR URL (`…/?p=abc123`), a raw player id,
-`badge:AI4-42`, or a bare badge id — whatever the scanner gives you works.
+`email:name@corp.com`, or a bare corporate email — whatever the scanner gives you works.
 
 ## During the day
 
@@ -69,15 +70,16 @@ The `/staff` box accepts any of: the QR URL (`…/?p=abc123`), a raw player id,
 - **Between attendees (per station):** the app clears per-station scratch (chat,
   boss timer) on its own; for Break the Bot, confirm the AI Guard toggle is back
   **ON**.
-- **Happy-hour / full wipe:** Staff panel on `/` → **Reset demo tenant**
-  (`/api/reset`) clears everyone — use sparingly; it also clears the board. To get
-  a fresh daily number without wiping, use **New day** instead.
+- **Happy-hour / full wipe:** the authenticated **`/admin`** page → **Reset demo
+  tenant** clears everyone — use sparingly; it also clears the board. To get a fresh
+  daily number without wiping, use **New day** (also on `/admin`). Default admin
+  login: `TrendAIStaff` / `Tr3nd8i!` (change via `STAFF_USER`/`STAFF_PASS`).
 
 ## Quick troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| "Screen name is taken" (409) | Two people picked the same name with no badge — add their badge ID, or pick a different name. |
+| "Screen name is taken" (409) | Two people picked the same name with no email — add their corporate email, or pick a different name. |
 | Scanner not awarding | Make sure the `/staff` Attendee box is focused; most scanners send Enter automatically (the page awards on Enter). |
 | Board empty after restart | Persistence is on via `run.sh`; if you launched uvicorn manually, set `BOOTH_PERSIST=1`. |
 | Wrong hour/day rollover | The server clock isn't on Vegas time (America/Los_Angeles). |
@@ -85,7 +87,7 @@ The `/staff` box accepts any of: the QR URL (`…/?p=abc123`), a raw player id,
 
 ## Data handling
 
-Synthetic data only at every station. AI4 **badge IDs** are stored server-side to
-identify/resume players and are **never shown on the public leaderboard**. If
+Synthetic data only at every station. **Corporate emails** are stored server-side
+to identify/resume players and are **never shown on the public leaderboard**. If
 anyone enters something sensitive by mistake, clear the session and reset the
 station. See the booth runbook for the full safety checklist.
