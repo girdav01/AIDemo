@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vision One AI Security Challenge</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="app">
+    <div class="brand">
+      <div class="logo">V1</div>
+      <div>
+        <h1>Vision One AI Security Challenge</h1>
+        <div class="sub" id="event">Trend Vision One™</div>
+      </div>
+    </div>
+    <div class="taglines">
+      <div><b>Can you break the bot?</b></div>
+      <div>Don't just build AI. <b>Secure it.</b> · AI Fearlessly</div>
+      <div id="botmode" class="muted"></div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main>
+      <!-- Passport -->
+      <div class="card">
+        <h2>🎫 Challenge Passport</h2>
+        <div class="passport-bar" id="passportBar">
+          <input id="nameInput" placeholder="Pick a screen name" maxlength="40" />
+          <button id="startBtn">Start passport</button>
+          <span class="muted">Clear all six to enter the grand-prize draw.</span>
+        </div>
+        <div class="passport-bar hidden" id="meBar">
+          <span class="me"><span id="meName"></span> · <span class="pts" id="mePts">0 pts</span></span>
+          <span class="pill" id="meStamps">0 / 6 stamps</span>
+          <span class="pill" id="meDone"></span>
+          <button class="ghost" id="newBtn">New player</button>
+        </div>
+      </div>
+
+      <!-- Stations -->
+      <div class="grid" id="stationGrid"></div>
+
+      <!-- Active station panel -->
+      <div class="card panel hidden" id="panel">
+        <div class="row" style="justify-content:space-between">
+          <h2 id="panelTitle"></h2>
+          <button class="ghost" id="closePanel">Close</button>
+        </div>
+        <div class="muted" id="panelMeta"></div>
+        <div id="panelBody"></div>
+      </div>
+    </main>
+
+    <!-- Sidebar -->
+    <aside>
+      <div class="card">
+        <h2>🏆 Leaderboard</h2>
+        <div class="lb" id="leaderboard"><div class="muted">No players yet.</div></div>
+        <div class="row" style="margin-top:10px">
+          <a href="/screen" target="_blank">Open big-screen view ↗</a>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h2>📡 Activity log</h2>
+        <div class="muted" style="font-size:12px;margin-bottom:6px">
+          AI Guard blocked / redacted / denied events — the booth timeline.
+        </div>
+        <div id="log"><div class="muted">No activity yet.</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h2>🛠 Staff</h2>
+        <button class="ghost" id="resetBtn">Reset demo tenant</button>
+        <div class="muted" style="font-size:12px;margin-top:8px">
+          Synthetic data only. Confirm AI Guard is ON at shift start.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

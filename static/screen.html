@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Security Challenge — Leaderboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    body { overflow: hidden; }
+    .screen { padding: 40px 60px; }
+    .hero { text-align: center; margin-bottom: 24px; }
+    .hero h1 { font-size: 48px; margin: 0; }
+    .hero .red { color: var(--trend-red); }
+    .hero p { color: var(--muted); font-size: 20px; margin: 8px 0 0; }
+    .cols { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; }
+    .big-lb .row { font-size: 28px; padding: 12px 0; }
+    .big-lb .pts { font-size: 28px; }
+    .big-lb .rank { color: var(--gold); font-weight: 800; width: 60px; display: inline-block; }
+    .how li { font-size: 20px; margin: 10px 0; }
+    .stat { margin-top: 24px; font-size: 22px; color: var(--gold); text-align: center; }
+    .foot { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="hero">
+      <h1>AI Security <span class="red">Challenge</span></h1>
+      <p>Trend Vision One™ · Can you break the bot? · <b>Don't just build AI. Secure it.</b></p>
+    </div>
+    <div class="cols">
+      <div class="card big-lb">
+        <h2>🏆 Live Leaderboard</h2>
+        <div id="lb"><div class="muted">Waiting for players…</div></div>
+      </div>
+      <div class="card how">
+        <h2>How to Play</h2>
+        <ol>
+          <li>Grab a Challenge Passport at the counter.</li>
+          <li>Clear any station in ~5 minutes with a TrendAI guide.</li>
+          <li>Earn a stamp for every challenge you beat.</li>
+          <li>Watch your name climb this leaderboard.</li>
+          <li>Top scores each day win — a full passport enters the grand-prize draw.</li>
+        </ol>
+        <div class="stat">Only 37% of organizations test their AI before they ship it. Be the exception.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Beat one → swag · Full passport → premium swag + draw · Daily top 3 at 4 PM · Boss Level → “AI Fearlessly” coin</div>
+  <script>
+    async function tick() {
+      try {
+        const r = await fetch("/api/leaderboard"); const { leaderboard } = await r.json();
+        const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+        document.getElementById("lb").innerHTML = leaderboard.length
+          ? leaderboard.slice(0, 10).map(p => `<div class="r"><span class="nm">
+              <span class="rank">#${p.rank}</span> ${esc(p.name)} ${p.completed ? '<span class="full">✓ full</span>' : ""}</span>
+              <span class="pts">${p.points}</span></div>`).join("")
+          : '<div class="muted">Waiting for players…</div>';
+      } catch (e) {}
+    }
+    tick(); setInterval(tick, 3000);
+  </script>
+</body>
+</html>
