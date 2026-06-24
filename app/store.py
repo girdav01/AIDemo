@@ -59,7 +59,7 @@ def _now() -> float:
     return time.time()
 
 
-def create_passport(name: str, badge_id: str = "") -> Dict:
+def create_passport(name: str, badge_id: str = "", human_verified: bool = True) -> Dict:
     """Create a passport, or resume an existing one when an AI4 badge ID is
     supplied and already known (same player across devices / a return visit)."""
     with _lock:
@@ -86,6 +86,7 @@ def create_passport(name: str, badge_id: str = "") -> Dict:
             "id": pid,
             "name": name.strip()[:40] or "Anonymous",
             "badge_id": badge,     # stored to identify players; never shown publicly
+            "human_verified": bool(human_verified),
             "points": 0,
             "stamps": {},          # challenge_id -> {points, at}
             "completed": False,

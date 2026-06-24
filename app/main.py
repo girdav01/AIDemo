@@ -37,6 +37,7 @@ STATIC_DIR = __file__.rsplit("/", 2)[0] + "/static"
 class CreatePassport(BaseModel):
     name: str = "Anonymous"
     badge_id: str = ""
+    human_verified: bool = True  # booth human-check attestation (client gate)
 
 
 class ChatBody(BaseModel):
@@ -127,7 +128,7 @@ def create_passport(body: CreatePassport):
     # If an AI4 badge ID is given and already known, resume that passport
     # (same player across devices / a returning attendee) instead of duplicating.
     try:
-        return store.create_passport(body.name, body.badge_id)
+        return store.create_passport(body.name, body.badge_id, body.human_verified)
     except store.NameTakenError as e:
         raise HTTPException(409, str(e))
 

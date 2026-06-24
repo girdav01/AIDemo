@@ -195,6 +195,12 @@ def test_leaderboard_windows():
     assert client.get("/api/leaderboard", params={"window": "event"}).json()["leaderboard"] == []
 
 
+def test_human_verified_recorded():
+    store.reset_tenant()
+    p = client.post("/api/passport", json={"name": "HumanA", "human_verified": True}).json()
+    assert p["human_verified"] is True
+
+
 def test_badge_id_resumes_same_passport():
     store.reset_tenant()
     a = client.post("/api/passport", json={"name": "Dave", "badge_id": "AI4-123"}).json()
