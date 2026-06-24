@@ -1,4 +1,4 @@
-# Vision One AI Security Challenge — Booth App
+# TrendAI Vision One AI Security Challenge — Booth App
 
 A runnable booth experience for the **TrendAI Vision One™ AI Security Challenge**
 (Ai4 2026, The Venetian, Las Vegas). Attendees pick up a **Challenge Passport**,

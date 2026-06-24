@@ -1,4 +1,4 @@
-// Vision One AI Security Challenge — booth frontend
+// TrendAI Vision One AI Security Challenge — booth frontend
 const state = { meta: null, challenges: [], pid: null, me: null, active: null };
 
 const $ = (s, r = document) => r.querySelector(s);
