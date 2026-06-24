@@ -29,6 +29,7 @@ async function init() {
   $("#event").textContent = "AI Security Challenge · " + state.meta.event;
   $("#botmode").textContent = "Bot: " + (state.meta.live_bot ? "live " + state.meta.model : "offline (deterministic)");
   renderStations();
+  renderHumanCheck();
   restorePlayer();
   document.querySelectorAll(".lbtab").forEach((b) => {
     b.onclick = () => {
@@ -51,11 +52,42 @@ function restorePlayer() {
   }
 }
 
+// On-theme human verification — tap the human emoji. Booth gate, not security.
+function renderHumanCheck(msg) {
+  const box = $("#humanCheck");
+  if (!box) return;
+  state.humanOK = false;
+  $("#startBtn").disabled = true;
+  const opts = ["🧑", "🤖", "👾", "🛸"];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  box.innerHTML = "";
+  const q = el("span", { className: "q" }, msg || "Verify you're human — tap the person:");
+  if (msg) q.style.color = "var(--bad)";
+  box.appendChild(q);
+  opts.forEach((e) => {
+    const b = el("button", { className: "he", type: "button" }, e);
+    b.onclick = () => {
+      if (e === "🧑") {
+        state.humanOK = true;
+        $("#startBtn").disabled = false;
+        box.innerHTML = '<span class="ok">✓ Human verified — welcome!</span>';
+      } else {
+        renderHumanCheck("Nope — that's an AI. Humans only; tap the person:");
+      }
+    };
+    box.appendChild(b);
+  });
+}
+
 $("#startBtn").onclick = async () => {
+  if (!state.humanOK) { alert("Please complete the human check first."); return; }
   const name = $("#nameInput").value.trim() || "Anonymous";
   const badge_id = $("#badgeInput").value.trim();
   try {
-    const p = await api("/api/passport", { name, badge_id });
+    const p = await api("/api/passport", { name, badge_id, human_verified: true });
     setPlayer(p);
   } catch (e) {
     alert(e.message); // e.g. screen name taken — pick another or add your badge ID

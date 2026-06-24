@@ -28,9 +28,11 @@
       <div class="card">
         <h2>🎫 Challenge Passport</h2>
         <div class="passport-bar" id="passportBar">
+          <div class="humanwarn">⚠️ Humans only — no AI agents, bots, or automated entries. Prove you're human to enter.</div>
           <input id="nameInput" placeholder="Pick a screen name" maxlength="40" />
           <input id="badgeInput" placeholder="AI4 badge ID (optional — scan or type)" maxlength="64" />
-          <button id="startBtn">Start passport</button>
+          <div class="humancheck" id="humanCheck"></div>
+          <button id="startBtn" disabled>Start passport</button>
           <span class="muted">Clear one challenge in each layer (Visibility · Control · Governance) to enter the draw.</span>
         </div>
         <div class="passport-bar hidden" id="meBar">
