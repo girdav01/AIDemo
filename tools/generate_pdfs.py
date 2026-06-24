@@ -24,6 +24,10 @@ MUTED = HexColor("#5a6573")
 GOLD = HexColor("#b8860b")
 W, H = LETTER
 
+# Visibility -> Control -> Governance spine (Boss Level is the capstone).
+PILLAR_BY_NUM = {1: "Control", 2: "Control", 3: "Visibility", 4: "Visibility",
+                 5: "Control", 6: "Governance", 7: "Governance", 8: "Capstone"}
+
 # Staff card content — sourced from the booth runbook.
 CARDS = [
     {
@@ -80,7 +84,24 @@ CARDS = [
         "reset": "Re-select the pre-saved scan result; clear attendee notes.",
     },
     {
-        "n": 4, "name": "Shadow AI Hunt", "tier": "Everyone · ~5 min · exec / CISO win",
+        "n": 4, "name": "Trace the Poison", "tier": "Builder · ~5 min · Visibility · supply-chain story",
+        "cap": "Code Security · SBOM",
+        "objective": "Show Code Security catching a hardcoded secret and a malicious / vulnerable dependency before deploy — then using the SBOM to trace the blast radius.",
+        "setup": [
+            "Pre-load the seeded demo repo in Code Security; have the finished scan and SBOM open.",
+            "Seeded: hardcoded secret, a typosquatted package, and a known-vulnerable transitive dependency.",
+        ],
+        "prompts": [
+            "Hardcoded secret: AWS key AKIA-DEMO-NOTREAL in a config file.",
+            "Typosquatted package: 'reqeusts' standing in for 'requests'.",
+            "Vulnerable transitive dep: a pinned Log4Shell-era version flagged by SCA.",
+        ],
+        "clears": "They identify both the exposed secret and the malicious / vulnerable dependency, and name one downstream app from the SBOM.",
+        "reveal": "XZ Utils, Log4Shell, the npm and PyPI typosquats — this is how you answer 'are we exposed?' in minutes, with the SBOM as your map.",
+        "reset": "Re-select the saved scan result and SBOM; clear attendee notes.",
+    },
+    {
+        "n": 5, "name": "Shadow AI Hunt", "tier": "Everyone · ~5 min · exec / CISO win",
         "cap": "AI Secure Access · Zero Trust",
         "objective": "Show AI Secure Access discovering unsanctioned GenAI use and enforcing policy.",
         "setup": [
@@ -96,7 +117,7 @@ CARDS = [
         "reset": "Remove the attendee-created policy; reset the discovery filter.",
     },
     {
-        "n": 5, "name": "Tame the Agent", "tier": "Expert · ~5 min · the #1 Ai4 theme",
+        "n": 6, "name": "Tame the Agent", "tier": "Expert · ~5 min · the #1 Ai4 theme",
         "cap": "Agentic Governance · LLM01 indirect / LLM06",
         "objective": "Show agentic governance: an autonomous agent is intercepted when it tries an unauthorized action — via indirect prompt injection.",
         "setup": [
@@ -112,7 +133,23 @@ CARDS = [
         "reset": "Reset the agent run; restore the default policy and source document.",
     },
     {
-        "n": 6, "name": "Boss Level — Close the Loop", "tier": "Expert · ~5 min · platform capstone",
+        "n": 7, "name": "Watch the MCP Wire", "tier": "Expert · ~5 min · Governance · NEW July preview",
+        "cap": "Agentic Governance Gateway",
+        "objective": "Show the Agentic Governance Gateway as the LLM + MCP proxy in front of an agent: full visibility into every MCP tool-call, with policy enforced at one choke point.",
+        "setup": [
+            "If the AGG MVP is demo-stable: route a live agent's MCP traffic through the gateway with the call dashboard open.",
+            "Fallback: guided walkthrough off the recorded demo + the Malicious Skill video; capture leads.",
+        ],
+        "prompts": [
+            "Planted: a rogue MCP tool-call reaching outside its approved scope —",
+            "a filesystem server requesting paths it shouldn't, or a call to an unapproved MCP server.",
+        ],
+        "clears": "The disallowed MCP call is blocked at the gateway and logged with full request / response visibility.",
+        "reveal": "Every agent-to-tool call flows through one governed choke point — LiteLLM-native and MCP-aware. Govern agents without rewriting them.",
+        "reset": "Restore the default gateway policy; reset the demo agent run.",
+    },
+    {
+        "n": 8, "name": "Boss Level — Close the Loop", "tier": "Expert · ~5 min · platform capstone",
         "cap": "Vision One Platform + Companion",
         "objective": "Speed-run the full Security Loop (scan → protect → validate → improve), finishing with a Companion incident summary.",
         "setup": [
@@ -154,6 +191,8 @@ def station_cards(path):
         c.setFont("Helvetica-Bold", 30); c.drawString(m, H - 0.75 * inch, str(card["n"]))
         c.setFont("Helvetica-Bold", 22); c.drawString(m + 0.5 * inch, H - 0.75 * inch, card["name"])
         c.setFont("Helvetica", 11); c.drawString(m + 0.5 * inch, H - 1.05 * inch, card["tier"])
+        c.setFont("Helvetica-Bold", 12)
+        c.drawRightString(W - m, H - 0.7 * inch, "Pillar: " + PILLAR_BY_NUM.get(card["n"], ""))
         c.setFont("Helvetica-Bold", 10)
         c.drawRightString(W - m, H - 1.05 * inch, card["cap"])
 
@@ -222,7 +261,7 @@ def poster(path, url):
     c.drawCentredString(W / 2, H - 7.5 * inch, url)
 
     c.setFillColor(GOLD); c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(W / 2, 1.7 * inch, "Clear all six → grand-prize draw")
+    c.drawCentredString(W / 2, 1.7 * inch, "One per pillar (Visibility · Control · Governance) → grand-prize draw")
     c.setFillColor(RED); c.setFont("Helvetica-Bold", 18)
     c.drawCentredString(W / 2, 1.2 * inch, "Don't just build AI. Secure it. — AI Fearlessly")
     c.showPage(); c.save()

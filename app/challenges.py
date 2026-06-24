@@ -4,13 +4,18 @@ from typing import Dict, List
 
 from . import seed
 
-# Six stations, in passport order. Mirrors the booth runbook / screen deck.
+# Pillars of the Visibility -> Control -> Governance spine. A full passport
+# requires clearing one challenge in each pillar. Boss Level is a Capstone (bonus).
+PILLARS = ["Visibility", "Control", "Governance"]
+
+# Eight stations, in passport order. Mirrors the booth runbook / screen deck.
 CHALLENGES: List[Dict] = [
     {
         "id": "break-the-bot",
         "number": 1,
         "name": "Break the Bot",
         "tier": "Everyone",
+        "pillar": "Control",
         "capability": "AI Guard",
         "owasp": "LLM01 Prompt Injection",
         "mission": "Jailbreak a live chatbot to leak a planted secret.",
@@ -22,6 +27,7 @@ CHALLENGES: List[Dict] = [
         "number": 2,
         "name": "Stop the Leak",
         "tier": "Everyone",
+        "pillar": "Control",
         "capability": "AI Guard",
         "owasp": "LLM02 Sensitive Information Disclosure",
         "mission": "Coax the app into spilling fake PII or source code.",
@@ -33,6 +39,7 @@ CHALLENGES: List[Dict] = [
         "number": 3,
         "name": "Find the Flaw",
         "tier": "Builder",
+        "pillar": "Visibility",
         "capability": "AI Scanner",
         "owasp": "LLM01 / LLM05 / LLM06",
         "mission": "Run AI Scanner on a vulnerable model pre-deploy.",
@@ -40,10 +47,23 @@ CHALLENGES: List[Dict] = [
         "starters": [],
     },
     {
-        "id": "shadow-ai",
+        "id": "trace-the-poison",
         "number": 4,
+        "name": "Trace the Poison",
+        "tier": "Builder",
+        "pillar": "Visibility",
+        "capability": "Code Security",
+        "owasp": "Supply chain / SBOM",
+        "mission": "Catch a hardcoded secret + bad dependency, trace it via the SBOM.",
+        "clears_when": "You name the secret, the bad dependency, and a downstream app.",
+        "starters": [],
+    },
+    {
+        "id": "shadow-ai",
+        "number": 5,
         "name": "Shadow AI Hunt",
         "tier": "Everyone",
+        "pillar": "Control",
         "capability": "AI Secure Access",
         "owasp": "Governance / Zero Trust",
         "mission": "Spot unsanctioned GenAI use, then set a policy.",
@@ -52,9 +72,10 @@ CHALLENGES: List[Dict] = [
     },
     {
         "id": "tame-the-agent",
-        "number": 5,
+        "number": 6,
         "name": "Tame the Agent",
         "tier": "Expert",
+        "pillar": "Governance",
         "capability": "Agentic Governance",
         "owasp": "LLM01 (indirect) / LLM06 Excessive Agency",
         "mission": "Push a rogue agent toward an unauthorized action.",
@@ -62,10 +83,23 @@ CHALLENGES: List[Dict] = [
         "starters": [],
     },
     {
+        "id": "watch-mcp-wire",
+        "number": 7,
+        "name": "Watch the MCP Wire",
+        "tier": "Expert",
+        "pillar": "Governance",
+        "capability": "Agentic Governance Gateway",
+        "owasp": "MCP tool-call governance",
+        "mission": "Spot a rogue MCP tool-call at the gateway and block it.",
+        "clears_when": "The disallowed MCP call is blocked at the gateway and logged.",
+        "starters": [],
+    },
+    {
         "id": "boss-level",
-        "number": 6,
+        "number": 8,
         "name": "Boss Level — Close the Loop",
         "tier": "Expert",
+        "pillar": "Capstone",
         "capability": "Vision One Platform + Companion",
         "owasp": "Full Security Loop",
         "mission": "Speed-run scan → protect → validate → improve.",
@@ -75,6 +109,7 @@ CHALLENGES: List[Dict] = [
 ]
 
 CHALLENGES_BY_ID = {c["id"]: c for c in CHALLENGES}
+PILLAR_BY_ID = {c["id"]: c["pillar"] for c in CHALLENGES}
 
 
 def score_jailbreak_attempt(

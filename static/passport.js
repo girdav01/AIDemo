@@ -29,8 +29,11 @@ function render(p, lb) {
   document.getElementById("pname").textContent = p.name;
   document.getElementById("ppts").textContent = p.points;
   const n = Object.keys(p.stamps || {}).length;
-  document.getElementById("pstamps").textContent = n + " / 6 stamps";
-  document.getElementById("pdone").textContent = p.completed ? "✅ Full passport — draw entered!" : "";
+  document.getElementById("pstamps").textContent = n + " / " + CH.length + " stamps";
+  const byId = Object.fromEntries(CH.map((c) => [c.id, c.pillar]));
+  const cov = new Set(Object.keys(p.stamps || {}).map((id) => byId[id]));
+  const pills = ["Visibility", "Control", "Governance"].map((x) => x[0] + (cov.has(x) ? "✓" : "—")).join(" · ");
+  document.getElementById("pdone").textContent = p.completed ? "✅ Full passport — draw entered!" : pills;
   document.getElementById("pcode").textContent = p.id;
   document.getElementById("playLink").href = "/?p=" + p.id;
 

@@ -66,13 +66,21 @@ function setPlayer(p) {
   renderMe();
 }
 
+function pillarsCovered() {
+  const stamps = (state.me && state.me.stamps) || {};
+  const byId = Object.fromEntries(state.challenges.map((c) => [c.id, c.pillar]));
+  const set = new Set(Object.keys(stamps).map((id) => byId[id]));
+  return ["Visibility", "Control", "Governance"].map((p) => ({ p, on: set.has(p) }));
+}
+
 function renderMe() {
   if (!state.me) return;
   $("#meName").textContent = state.me.name;
   $("#mePts").textContent = state.me.points + " pts";
   const n = Object.keys(state.me.stamps || {}).length;
-  $("#meStamps").textContent = n + " / 6 stamps";
-  $("#meDone").textContent = state.me.completed ? "✅ Full passport!" : "";
+  $("#meStamps").textContent = n + " / " + state.challenges.length + " stamps";
+  const pills = pillarsCovered().map((x) => `${x.p[0]}${x.on ? "✓" : "—"}`).join(" · ");
+  $("#meDone").textContent = state.me.completed ? "✅ Full passport (all pillars)!" : pills;
   renderStations();
 }
 
@@ -93,7 +101,7 @@ function renderStations() {
     card.innerHTML = `
       <span class="stamp">✔ STAMPED</span>
       <span class="num">${c.number}</span>
-      <div class="tier">${esc(c.tier)} · ${esc(c.capability)}</div>
+      <div class="tier">${esc(c.tier)} · ${esc(c.pillar)} · ${esc(c.capability)}</div>
       <h3>${esc(c.name)}</h3>
       <div class="cap">${esc(c.owasp)}</div>
       <div class="muted" style="font-size:12px;margin-top:6px">${esc(c.mission)}</div>`;
@@ -120,8 +128,10 @@ function openPanel(c) {
     "break-the-bot": renderBreakTheBot,
     "stop-the-leak": renderStopTheLeak,
     "find-the-flaw": renderFindTheFlaw,
+    "trace-the-poison": renderTracePoison,
     "shadow-ai": renderShadowAI,
     "tame-the-agent": renderTameTheAgent,
+    "watch-mcp-wire": renderWatchMcpWire,
     "boss-level": renderBossLevel,
   })[c.id]();
 }
@@ -234,7 +244,48 @@ async function renderFindTheFlaw() {
   };
 }
 
-// ---------- 4. Shadow AI Hunt ----------
+// ---------- 4. Trace the Poison ----------
+async function renderTracePoison() {
+  const body = $("#panelBody");
+  body.innerHTML = `<p class="muted">Loading Code Security scan…</p>`;
+  const r = await api("/api/challenges/trace-the-poison/scan");
+  const findings = r.findings.map((f) => `<tr>
+    <td class="sev-${f.severity}">${f.severity}</td>
+    <td>${esc(f.type)}<br><span class="muted" style="font-size:12px">${esc(f.detail)}</span></td></tr>`).join("");
+  const sbom = r.sbom.map((s) => `<tr>
+    <td>${esc(s.component)}</td><td>${esc(s.downstream)}</td>
+    <td>${s.flagged ? '<span class="sev-High">⚠ ' + esc(s.why) + "</span>" : '<span class="muted">ok</span>'}</td></tr>`).join("");
+  body.innerHTML = `
+    <p class="muted">Code Security scanned <b>${esc(r.repo)}</b>. Find the leaked secret and the
+      bad dependency, then use the SBOM to name a downstream app that ships a flagged component.</p>
+    <h3>Findings</h3>
+    <table><thead><tr><th>Severity</th><th>Finding</th></tr></thead><tbody>${findings}</tbody></table>
+    <h3 style="margin-top:12px">SBOM — blast radius</h3>
+    <table><thead><tr><th>Component</th><th>Downstream app</th><th>Status</th></tr></thead><tbody>${sbom}</tbody></table>
+    <div class="row" style="margin-top:10px">
+      <input id="tpSecret" placeholder="The leaked secret (e.g. AWS key)" style="flex:1" /></div>
+    <div class="row">
+      <input id="tpDep" placeholder="The bad dependency (typosquat or Log4Shell)" style="flex:1" /></div>
+    <div class="row">
+      <select id="tpApp"><option value="">Pick affected downstream app…</option>
+        ${r.apps.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("")}</select>
+      <button id="tpBtn">Submit trace</button></div>
+    <div id="tpRes"></div>`;
+  $("#tpBtn").onclick = async () => {
+    const res = await api("/api/challenges/trace-the-poison/answer", {
+      player_id: state.pid, secret: $("#tpSecret").value,
+      dependency: $("#tpDep").value, downstream_app: $("#tpApp").value,
+    });
+    const ticks = `<span class="pill">secret ${res.secret_ok ? "✓" : "✗"}</span>
+      <span class="pill">dependency ${res.dependency_ok ? "✓" : "✗"}</span>
+      <span class="pill">SBOM app ${res.app_ok ? "✓" : "✗"}</span>`;
+    $("#tpRes").innerHTML = ticks + banner(res.correct ? "good" : "bad",
+      esc(res.message) + (res.cleared ? " Station cleared!" : ""));
+    await refreshMe(); refreshSidebar();
+  };
+}
+
+// ---------- 5. Shadow AI Hunt ----------
 async function renderShadowAI() {
   const body = $("#panelBody");
   const d = await api("/api/challenges/shadow-ai/discovery");
@@ -269,7 +320,7 @@ async function renderShadowAI() {
   };
 }
 
-// ---------- 5. Tame the Agent ----------
+// ---------- 6. Tame the Agent ----------
 async function renderTameTheAgent() {
   const body = $("#panelBody");
   const b = await api("/api/challenges/tame-the-agent/briefing");
@@ -294,7 +345,34 @@ async function renderTameTheAgent() {
   };
 }
 
-// ---------- 6. Boss Level ----------
+// ---------- 7. Watch the MCP Wire ----------
+async function renderWatchMcpWire() {
+  const body = $("#panelBody");
+  const r = await api("/api/challenges/watch-mcp-wire/calls");
+  const rows = r.calls.map((c) => `<div class="toolcall" id="mc-${c.id}">
+    <div class="row" style="justify-content:space-between">
+      <div><code>${esc(c.server)}</code> · <b>${esc(c.tool)}</b> → ${esc(c.arg)}</div>
+      <button class="ghost" data-call="${c.id}">Block</button></div></div>`).join("");
+  body.innerHTML = `
+    <p class="muted">${esc(r.note)}</p>
+    <p class="muted">Every agent-to-tool call flows through the gateway. Spot the call reaching
+      outside its approved scope or hitting an unapproved server, then block it.</p>
+    <div id="mcpCalls">${rows}</div>
+    <div id="mcpRes"></div>`;
+  body.querySelectorAll("button[data-call]").forEach((btn) => {
+    btn.onclick = async () => {
+      const res = await api("/api/challenges/watch-mcp-wire/block",
+        { player_id: state.pid, call_id: btn.dataset.call });
+      const box = $("#mc-" + btn.dataset.call);
+      if (res.cleared) box.classList.add("denied");
+      $("#mcpRes").innerHTML = banner(res.cleared ? "good" : "bad",
+        esc(res.message) + (res.cleared ? " Station cleared!" : ""));
+      await refreshMe(); refreshSidebar();
+    };
+  });
+}
+
+// ---------- 8. Boss Level ----------
 let bossTimer = null;
 async function renderBossLevel() {
   const body = $("#panelBody");
