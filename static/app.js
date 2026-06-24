@@ -65,7 +65,7 @@ async function initMarquee() {
   let i = 0;
   const show = () => {
     span.classList.remove("show");
-    setTimeout(() => { span.textContent = msgs[i % msgs.length]; span.classList.add("show"); }, 450);
+    setTimeout(() => { span.textContent = "📣 " + msgs[i % msgs.length]; span.classList.add("show"); }, 450);
     i++;
   };
   show();

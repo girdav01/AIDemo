@@ -48,9 +48,6 @@ header.app {
   vertical-align: middle; opacity: 0; transition: opacity .45s ease;
 }
 .marquee span.show { opacity: 1; }
-.marquee::before {
-  content: "📣"; margin-right: 8px; vertical-align: middle; opacity: .8;
-}
 @media (max-width: 900px) { .marquee { display: none; } }
 
 .wrap { display: grid; grid-template-columns: 1fr 340px; gap: 20px; padding: 22px 28px; }
