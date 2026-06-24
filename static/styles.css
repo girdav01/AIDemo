@@ -42,8 +42,9 @@ header.app {
   flex: 1; min-width: 0; margin: 0 24px; overflow: hidden; text-align: center;
 }
 .marquee span {
-  display: inline-block; max-width: 100%; color: var(--text); font-size: 15px;
-  font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  max-width: 100%; color: var(--text); font-size: 15px; font-weight: 600;
+  white-space: normal; overflow: hidden; line-height: 1.25;
   vertical-align: middle; opacity: 0; transition: opacity .45s ease;
 }
 .marquee span.show { opacity: 1; }
