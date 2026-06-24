@@ -55,7 +55,7 @@ used — recommended for booth reliability.
 | 7 | **Watch the MCP Wire** | Governance | Expert | Agentic Governance Gateway | The rogue MCP call is blocked at the gateway |
 | 8 | **Boss Level** | Capstone | Expert | Platform + Companion | All four loop steps before the timer |
 
-**Persona routing:** Execs/CISOs → 2 & 5. Builders → 3, 4, 6, 7, 8. Walk-ups → 1.
+**Persona routing:** Execs / CIO / CAIO / CISO → 2 & 5. AI Builders → 3, 4, 6, 7, 8. Walk-ups → 1.
 Make sure everyone hits one **Visibility**, one **Control**, and one **Governance** station.
 
 > **Watch the MCP Wire** is a NEW July preview (conditional). It runs here as a
@@ -167,6 +167,7 @@ static/
   screen.html                    big-screen leaderboard + attractor video
 tools/
   generate_pdfs.py               station cards + booth poster PDFs
+  generate_screen_deck.py        booth big-screen deck (.pptx, 8 challenges)
 docs/
   vision-one-setup/              per-challenge Vision One build instructions
 video/                           booth video assets (Malicious Skill attractor)
