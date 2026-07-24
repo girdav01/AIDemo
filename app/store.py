@@ -40,6 +40,7 @@ CLEAR_POINTS = {
     "tame-the-agent": 50,
     "watch-mcp-wire": 75,
     "boss-level": 100,
+    "map-the-risk": 0,    # scored purely by the +3/-1 quiz deltas (no fixed base)
 }
 FULL_PASSPORT_BONUS = 100  # awarded once one challenge in each layer is cleared
 

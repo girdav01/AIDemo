@@ -3,7 +3,7 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt
 const ICONS = {
   "break-the-bot": "🤖", "stop-the-leak": "🛡️", "find-the-flaw": "🔍",
   "trace-the-poison": "🧪", "shadow-ai": "👁️", "tame-the-agent": "⚙️",
-  "watch-mcp-wire": "🔌", "boss-level": "🏁",
+  "watch-mcp-wire": "🔌", "boss-level": "🏁", "map-the-risk": "🧭",
 };
 let CH = [];
 let BASE = "";   // public booth URL for QR (so it doesn't encode localhost)
