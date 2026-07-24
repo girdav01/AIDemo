@@ -150,3 +150,35 @@ th { color: var(--muted); font-weight: 600; }
 .toolcall { border-left: 3px solid var(--line); padding: 6px 10px; margin: 6px 0; }
 .toolcall.denied { border-color: var(--bad); }
 .toolcall.allowed { border-color: var(--good); }
+
+/* ---- 9. Name That Risk (OWASP drag-and-drop) ---- */
+.quiz-tax { color: #fff; border: none; font-weight: 700; }
+.quiz-blue { background: #3b82f6; } .quiz-red { background: var(--trend-red); }
+.quiz-purple { background: #8b5cf6; } .quiz-orange { background: #e8912a; }
+.quiz-teal { background: #0d9488; } .quiz-green { background: #2f9e44; }
+.quiz-ref { font-size: 12px; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.quiz-ref:hover { color: var(--trend-red); text-decoration: underline; }
+.quiz-grid { display: grid; grid-template-columns: 1fr 260px; gap: 14px; margin-top: 12px; }
+@media (max-width: 760px) { .quiz-grid { grid-template-columns: 1fr; } }
+.quiz-sit { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 10px; }
+.quiz-sit-txt { font-size: 13px; line-height: 1.35; }
+.quiz-drop { margin-top: 8px; min-height: 38px; border: 1px dashed var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; display: flex; align-items: center;
+  gap: 6px; cursor: pointer; transition: .12s; }
+.quiz-drop.over { border-color: var(--trend-red); background: rgba(215,25,32,.08); }
+.quiz-drop.filled { border-style: solid; border-color: var(--trend-red); color: var(--text); }
+.quiz-drop-ph { color: var(--muted); }
+.quiz-clear { margin-left: auto; color: var(--muted); cursor: pointer; font-weight: 700; }
+.quiz-clear:hover { color: var(--bad); }
+.quiz-code { font-weight: 800; color: var(--gold); font-size: 12px; }
+#quizOptions { display: flex; flex-direction: column; gap: 8px; align-content: start; }
+.quiz-opt { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; cursor: grab; user-select: none; transition: .12s; }
+.quiz-opt:hover { border-color: var(--trend-red); }
+.quiz-opt.sel { border-color: var(--gold); background: rgba(227,179,65,.12); }
+.quiz-opt.locked { cursor: default; opacity: .6; }
+.quiz-sit.quiz-right { border-color: var(--good); }
+.quiz-sit.quiz-wrong { border-color: var(--bad); }
+.quiz-sit.quiz-right .quiz-drop { border-color: var(--good); color: #7ee787; }
+.quiz-sit.quiz-wrong .quiz-drop { border-color: var(--bad); color: #ff7b72; }

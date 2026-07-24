@@ -17,13 +17,13 @@ def _player(name="Tester"):
 
 
 def test_meta_and_challenges():
-    assert client.get("/api/meta").json()["challenge_count"] == 8
+    assert client.get("/api/meta").json()["challenge_count"] == 10
     chs = client.get("/api/challenges").json()["challenges"]
-    assert len(chs) == 8
+    assert len(chs) == 10
     # every challenge carries a layer
     assert all(c.get("layer") for c in chs)
     ids = {c["id"] for c in chs}
-    assert {"trace-the-poison", "watch-mcp-wire"} <= ids
+    assert {"trace-the-poison", "watch-mcp-wire", "map-the-risk", "map-atlas"} <= ids
 
 
 def test_break_the_bot_block_clears_and_logs():
@@ -277,6 +277,80 @@ def test_admin_can_set_event_name():
     r = client.post("/api/admin/event", json={"event_name": "Test Expo · Booth 7"}, auth=STAFF_AUTH)
     assert r.status_code == 200
     assert client.get("/api/meta").json()["event"] == "Test Expo · Booth 7"
+
+
+def test_map_the_risk_quiz_shape_and_no_answers():
+    store.set_setting("quiz_pages", "3")
+    q = client.get("/api/challenges/map-the-risk/quiz").json()
+    assert q["total_pages"] == 3
+    assert q["scoring"] == {"correct": 3, "wrong": -1}
+    assert len(q["pages"]) == 3
+    for pg in q["pages"]:
+        # more options on the right than situations on the left (distractors)
+        assert len(pg["options"]) > len(pg["situations"])
+        assert pg["situations"] and pg["taxonomy"]["label"]
+        # the client must never receive the correct answers
+        for s in pg["situations"]:
+            assert set(s.keys()) == {"id", "text"}
+
+
+def test_map_the_risk_scoring_correct_and_wrong():
+    from app import quiz as qz
+    pid = _player()
+    # answer everything correctly using the server-side answer key
+    good = {sid: code for sid, code in qz.SITUATION_ANSWER.items()}
+    r = client.post("/api/challenges/map-the-risk/answer",
+                    json={"player_id": pid, "answers": good}).json()
+    assert r["wrong_count"] == 0 and r["correct_count"] == len(good)
+    assert r["delta"] == 3 * len(good)
+    assert r["player"]["points"] == r["delta"]
+    # a wrong answer costs a point; unknown ids are ignored
+    one = next(iter(qz.SITUATION_ANSWER))
+    bad_code = "LLM01" if qz.SITUATION_ANSWER[one] != "LLM01" else "LLM02"
+    r2 = client.post("/api/challenges/map-the-risk/answer",
+                     json={"player_id": pid, "answers": {one: bad_code, "does-not-exist": "ZZZ"}}).json()
+    assert r2["wrong_count"] == 1 and r2["correct_count"] == 0
+    assert r2["delta"] == -1
+
+
+def test_map_atlas_quiz_and_scoring():
+    from app import quiz as qz
+    store.set_setting("quiz_pages", "4")
+    q = client.get("/api/challenges/map-atlas/quiz").json()
+    assert q["framework"] == "MITRE ATLAS"
+    assert len(q["pages"]) == 4
+    for pg in q["pages"]:
+        assert len(pg["options"]) > len(pg["situations"])
+        assert pg["taxonomy"]["reference"].startswith("https://atlas.mitre.org/")
+        assert "ATLAS" in pg["taxonomy"]["label"]
+    # score an ATLAS answer using the shared server-side key
+    pid = _player()
+    atlas_ids = [sid for sid in qz.SITUATION_ANSWER if sid.startswith("atlas-")]
+    good = {sid: qz.SITUATION_ANSWER[sid] for sid in atlas_ids}
+    r = client.post("/api/challenges/map-atlas/answer",
+                    json={"player_id": pid, "answers": good}).json()
+    assert r["wrong_count"] == 0 and r["correct_count"] == len(atlas_ids)
+    assert r["delta"] == 3 * len(atlas_ids)
+    # the reveal carries a reference link for the correct technique
+    assert all(res["reference"].startswith("https://atlas.mitre.org/") for res in r["results"])
+
+
+def test_owasp_quiz_pages_carry_reference():
+    q = client.get("/api/challenges/map-the-risk/quiz").json()
+    assert q["framework"] == "OWASP Top 10"
+    for pg in q["pages"]:
+        assert pg["taxonomy"]["reference"].startswith("http")
+
+
+def test_admin_can_set_quiz_pages():
+    store.reset_tenant()
+    assert client.post("/api/admin/quiz-pages", json={"pages": 5}).status_code == 401
+    r = client.post("/api/admin/quiz-pages", json={"pages": 5}, auth=STAFF_AUTH)
+    assert r.status_code == 200 and r.json()["quiz_pages"] == 5
+    assert client.get("/api/meta").json()["quiz_pages"] == 5
+    # clamped to 1..12
+    hi = client.post("/api/admin/quiz-pages", json={"pages": 99}, auth=STAFF_AUTH).json()
+    assert hi["quiz_pages"] == 12
 
 
 def test_hint_mode_defaults_beginner_and_toggles():

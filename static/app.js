@@ -204,6 +204,8 @@ function openPanel(c) {
     "tame-the-agent": renderTameTheAgent,
     "watch-mcp-wire": renderWatchMcpWire,
     "boss-level": renderBossLevel,
+    "map-the-risk": () => renderMappingGame("map-the-risk"),
+    "map-atlas": () => renderMappingGame("map-atlas"),
   })[c.id]();
 }
 
@@ -540,6 +542,163 @@ function startBossTimer(remaining) {
   };
   paint();
   bossTimer = setInterval(() => { rem -= 1; if (rem <= 0) { rem = 0; clearInterval(bossTimer); } paint(); }, 1000);
+}
+
+// ---------- 9 & 10. Mapping games (OWASP / MITRE ATLAS drag-and-drop) ----------
+const quizState = { base: null, quiz: null, page: 0, picks: {}, selected: null, score: 0 };
+
+async function renderMappingGame(challengeId) {
+  const base = "/api/challenges/" + challengeId;
+  const body = $("#panelBody");
+  body.innerHTML = `<p class="muted">Loading situations…</p>`;
+  const quiz = await api(base + "/quiz");
+  quizState.base = base; quizState.quiz = quiz; quizState.page = 0;
+  quizState.picks = {}; quizState.selected = null; quizState.score = 0;
+  const sc = quiz.scoring;
+  const noun = quiz.framework === "MITRE ATLAS" ? "ATLAS technique" : "OWASP Top-10 risk";
+  const nounP = quiz.framework === "MITRE ATLAS" ? "techniques" : "risks";
+  body.innerHTML = `
+    <p class="muted">Match each situation to the correct <b>${esc(noun)}</b>
+      (<b>${esc(quiz.framework)}</b>). Drag an entry onto a situation — or tap one, then
+      tap a situation. <b>+${sc.correct}</b> per correct match, <b>${sc.wrong}</b> per wrong one.
+      There are more ${esc(nounP)} than situations, so watch for distractors.</p>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="row" style="gap:8px;align-items:center">
+        <div id="quizTax" class="pill"></div>
+        <a id="quizRef" class="quiz-ref" target="_blank" rel="noopener noreferrer"
+           title="Open the official reference in a new tab">📖 reference</a>
+      </div>
+      <div class="muted" id="quizProg" style="font-size:12px"></div>
+      <div>Score: <b class="pts" id="quizScore" style="color:var(--gold)">0</b></div>
+    </div>
+    <div id="quizHint"></div>
+    <div class="quiz-grid">
+      <div id="quizSituations"></div>
+      <div id="quizOptions"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="quizSubmit">Submit page</button>
+      <button class="ghost hidden" id="quizNext">Next page →</button>
+    </div>
+    <div id="quizRes"></div>`;
+  $("#quizHint").appendChild(hintSlot(state.active));
+  paintQuizPage();
+  $("#quizSubmit").onclick = submitQuizPage;
+  $("#quizNext").onclick = () => { quizState.page++; paintQuizPage(); };
+}
+
+function curQuizPage() { return quizState.quiz.pages[quizState.page]; }
+
+function paintQuizPage() {
+  const pg = curQuizPage();
+  const total = quizState.quiz.total_pages;
+  $("#quizScore").textContent = quizState.score;
+  $("#quizProg").textContent = `Page ${pg.index + 1} / ${total}`;
+  const tax = $("#quizTax");
+  tax.textContent = pg.taxonomy.label;
+  tax.className = "pill quiz-tax quiz-" + pg.taxonomy.theme;
+  const ref = $("#quizRef");
+  if (pg.taxonomy.reference) { ref.href = pg.taxonomy.reference; ref.style.display = ""; }
+  else ref.style.display = "none";
+  quizState.selected = null;
+  $("#quizRes").innerHTML = "";
+  $("#quizSubmit").classList.remove("hidden");
+  $("#quizSubmit").disabled = false;
+  $("#quizNext").classList.add("hidden");
+
+  // Left: situations (drop targets)
+  const sit = $("#quizSituations"); sit.innerHTML = "";
+  pg.situations.forEach((s, i) => {
+    const slot = el("div", { className: "quiz-sit", id: "sit-" + s.id });
+    slot.innerHTML = `<div class="quiz-sit-txt"><b>${i + 1}.</b> ${esc(s.text)}</div>
+      <div class="quiz-drop" data-sit="${s.id}"><span class="quiz-drop-ph">drop a risk here</span></div>`;
+    const drop = slot.querySelector(".quiz-drop");
+    drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over");
+      assignPick(s.id, e.dataTransfer.getData("text/plain")); };
+    drop.onclick = () => { if (quizState.selected) assignPick(s.id, quizState.selected); };
+    sit.appendChild(slot);
+  });
+
+  // Right: risk options (draggable)
+  const opt = $("#quizOptions"); opt.innerHTML = "";
+  pg.options.forEach((o) => {
+    const chip = el("div", { className: "quiz-opt", draggable: true, id: "opt-" + o.code });
+    chip.innerHTML = `<span class="quiz-code">${esc(o.code)}</span> ${esc(o.name)}`;
+    chip.ondragstart = (e) => e.dataTransfer.setData("text/plain", o.code);
+    chip.onclick = () => {
+      quizState.selected = quizState.selected === o.code ? null : o.code;
+      opt.querySelectorAll(".quiz-opt").forEach((c) => c.classList.remove("sel"));
+      if (quizState.selected) chip.classList.add("sel");
+    };
+    opt.appendChild(chip);
+  });
+  repaintDrops();
+}
+
+function assignPick(sitId, code) {
+  if (!code) return;
+  quizState.picks[sitId] = code;
+  quizState.selected = null;
+  $("#quizOptions").querySelectorAll(".quiz-opt").forEach((c) => c.classList.remove("sel"));
+  repaintDrops();
+}
+
+function repaintDrops() {
+  const pg = curQuizPage();
+  const codeName = Object.fromEntries(pg.options.map((o) => [o.code, o.name]));
+  pg.situations.forEach((s) => {
+    const drop = document.querySelector(`.quiz-drop[data-sit="${s.id}"]`);
+    if (!drop) return;
+    const code = quizState.picks[s.id];
+    if (code) {
+      drop.innerHTML = `<span class="quiz-code">${esc(code)}</span> ${esc(codeName[code] || "")}
+        <span class="quiz-clear" title="clear">✕</span>`;
+      drop.classList.add("filled");
+      drop.querySelector(".quiz-clear").onclick = (e) => {
+        e.stopPropagation(); delete quizState.picks[s.id]; repaintDrops();
+      };
+    } else {
+      drop.innerHTML = `<span class="quiz-drop-ph">drop a risk here</span>`;
+      drop.classList.remove("filled");
+    }
+  });
+}
+
+async function submitQuizPage() {
+  const pg = curQuizPage();
+  const answers = {};
+  pg.situations.forEach((s) => { if (quizState.picks[s.id]) answers[s.id] = quizState.picks[s.id]; });
+  if (!Object.keys(answers).length) { $("#quizRes").innerHTML = banner("bad", "Match at least one situation first."); return; }
+  noteAttempt(state.active);
+  $("#quizSubmit").disabled = true;
+  const r = await api(quizState.base + "/answer", { player_id: state.pid, answers });
+  quizState.score += r.delta;
+  $("#quizScore").textContent = quizState.score;
+  const byId = Object.fromEntries(r.results.map((x) => [x.situation_id, x]));
+  pg.situations.forEach((s) => {
+    const slot = $("#sit-" + s.id);
+    const v = byId[s.id];
+    const drop = slot.querySelector(".quiz-drop");
+    if (!v) { slot.classList.add("quiz-skip"); return; }
+    slot.classList.add(v.is_correct ? "quiz-right" : "quiz-wrong");
+    const bookLink = v.reference
+      ? ` <a class="quiz-ref" href="${esc(v.reference)}" target="_blank" rel="noopener noreferrer" title="Reference">📖</a>`
+      : "";
+    drop.innerHTML = v.is_correct
+      ? `<span class="quiz-code">${esc(v.chosen)}</span> ✓ correct${bookLink}`
+      : `<span class="quiz-code">${esc(v.chosen)}</span> ✗ &nbsp;→ answer:
+         <b>${esc(v.correct_code)} ${esc(v.correct_name)}</b>${bookLink}`;
+  });
+  document.querySelectorAll("#quizOptions .quiz-opt").forEach((c) => { c.draggable = false; c.classList.add("locked"); });
+  $("#quizSubmit").classList.add("hidden");
+  const last = quizState.page >= quizState.quiz.total_pages - 1;
+  $("#quizRes").innerHTML = banner(r.delta >= 0 ? "good" : "bad",
+    `Page result: ${r.correct_count} right, ${r.wrong_count} wrong (${r.delta >= 0 ? "+" : ""}${r.delta} pts).` +
+    (last ? ` <b>Final score: ${quizState.score} pts.</b>` : ""));
+  if (!last) $("#quizNext").classList.remove("hidden");
+  await refreshMe(); refreshSidebar();
 }
 
 // ---------- sidebar ----------

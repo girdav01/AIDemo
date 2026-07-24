@@ -22,6 +22,7 @@ from . import (
     guard,
     llm,
     mcp_gateway,
+    quiz,
     scanner,
     secure_access,
     seed,
@@ -96,6 +97,11 @@ class VoteBody(BaseModel):
     player_id: str
 
 
+class QuizAnswerBody(BaseModel):
+    player_id: str
+    answers: dict = {}   # {situation_id: chosen_code} — typically one page's worth
+
+
 def _require(pid: str):
     p = store.get_passport(pid)
     if p is None:
@@ -128,6 +134,7 @@ def meta():
         # "beginner" (obvious starter hints) or "advanced" (limited hints, gated
         # behind 3 attempts per challenge). Toggled by staff in /admin.
         "hint_mode": store.get_setting("hint_mode", "beginner"),
+        "quiz_pages": _quiz_pages(),
         "base_url": config.BOOTH_URL,   # used for e-passport QR (avoids localhost)
         "live_bot": config.LIVE_BOT_ENABLED,
         "model": config.ANTHROPIC_MODEL if config.LIVE_BOT_ENABLED else "offline-bot",
@@ -225,6 +232,7 @@ def staff_me(user: str = Depends(require_staff)):
         "user": user,
         "event_name": store.get_setting("event_name", config.EVENT_NAME),
         "hint_mode": store.get_setting("hint_mode", "beginner"),
+        "quiz_pages": _quiz_pages(),
     }
 
 
@@ -255,6 +263,19 @@ def set_hint_mode(body: HintModeBody, _: str = Depends(require_staff)):
     label = "Advanced" if mode == "advanced" else "Beginner"
     return {"ok": True, "hint_mode": mode,
             "message": f"{label} hint mode is now active."}
+
+
+class QuizPagesBody(BaseModel):
+    pages: int
+
+
+@app.post("/api/admin/quiz-pages")
+def set_quiz_pages(body: QuizPagesBody, _: str = Depends(require_staff)):
+    """Set how many pages the 'Name That Risk' quiz runs (persisted, 1–12)."""
+    pages = max(1, min(int(body.pages), 12))
+    store.set_setting("quiz_pages", str(pages))
+    return {"ok": True, "quiz_pages": pages,
+            "message": f"Name That Risk quiz set to {pages} page(s)."}
 
 
 @app.get("/api/qr")
@@ -636,6 +657,61 @@ def _companion_summary(pid: str) -> str:
         "Recommendation: keep AI Guard enforced; add detected technique classes "
         "to the runtime policy. Status: RESOLVED."
     )
+
+
+# --------------------------------------------------------------------------- #
+# Challenges 9 & 10 — mapping games (OWASP Top-10 and MITRE ATLAS)
+# --------------------------------------------------------------------------- #
+def _quiz_pages() -> int:
+    try:
+        return max(1, min(int(store.get_setting("quiz_pages", "3")), 12))
+    except (TypeError, ValueError):
+        return 3
+
+
+def _grade_and_award(challenge_id: str, body: QuizAnswerBody):
+    """Shared grading for the mapping games: +3 correct / -1 wrong, banked as the
+    net delta to the leaderboard ledger."""
+    _require(body.player_id)
+    graded = quiz.grade(body.answers)
+    p = store.award(body.player_id, challenge_id, extra=graded["delta"])
+    if graded["results"]:
+        store.add_event(
+            challenge_id, "info",
+            f"Mapped {graded['correct_count']} correctly, "
+            f"{graded['wrong_count']} wrong ({graded['delta']:+d} pts).",
+        )
+    return {
+        **graded,
+        "cleared": True,
+        "player": {
+            "name": p["name"], "points": p["points"],
+            "stamps": len(p["stamps"]), "completed": p["completed"],
+        },
+    }
+
+
+@app.get("/api/challenges/map-the-risk/quiz")
+def map_the_risk_quiz():
+    """OWASP mapping quiz. Pages set by staff in /admin (quiz_pages). Answers are
+    graded server-side and never sent to the client."""
+    return quiz.build_quiz("map-the-risk", _quiz_pages())
+
+
+@app.post("/api/challenges/map-the-risk/answer")
+def map_the_risk_answer(body: QuizAnswerBody):
+    return _grade_and_award("map-the-risk", body)
+
+
+@app.get("/api/challenges/map-atlas/quiz")
+def map_atlas_quiz():
+    """MITRE ATLAS mapping quiz (situations → ATLAS techniques, grouped by tactic)."""
+    return quiz.build_quiz("map-atlas", _quiz_pages())
+
+
+@app.post("/api/challenges/map-atlas/answer")
+def map_atlas_answer(body: QuizAnswerBody):
+    return _grade_and_award("map-atlas", body)
 
 
 # --------------------------------------------------------------------------- #

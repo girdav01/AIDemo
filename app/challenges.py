@@ -122,6 +122,34 @@ CHALLENGES: List[Dict] = [
         "adv_hint": "Tap all four loop steps before the timer runs out: "
                     "scan → protect → validate → improve.",
     },
+    {
+        "id": "map-the-risk",
+        "number": 9,
+        "name": "Name That Risk",
+        "tier": "Everyone",
+        "layer": "Capstone",
+        "capability": "OWASP Mapping",
+        "owasp": "LLM / Agentic / MCP / Skills Top 10",
+        "mission": "Map each AI-security situation to the right OWASP Top-10 risk.",
+        "clears_when": "You drag situations onto the correct risks (+3 right, −1 wrong).",
+        "starters": [],
+        "adv_hint": "Each page uses ONE taxonomy (shown at the top). Match the "
+                    "situation's core failure to the risk whose name describes it.",
+    },
+    {
+        "id": "map-atlas",
+        "number": 10,
+        "name": "Map it to MITRE ATLAS",
+        "tier": "Builder",
+        "layer": "Capstone",
+        "capability": "MITRE ATLAS",
+        "owasp": "AI adversary tactics & techniques",
+        "mission": "Map each AI attack to the right MITRE ATLAS technique.",
+        "clears_when": "You drag attacks onto the correct ATLAS techniques (+3 right, −1 wrong).",
+        "starters": [],
+        "adv_hint": "Each page is one ATLAS tactic (shown at the top). Match the "
+                    "attack to the technique whose name describes what the adversary did.",
+    },
 ]
 
 CHALLENGES_BY_ID = {c["id"]: c for c in CHALLENGES}

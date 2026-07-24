@@ -49,6 +49,14 @@
             Advanced mode (limited hints)</label>
           <span id="hintModeNow" class="pill"></span>
         </div>
+        <h2 style="margin-top:18px">Mapping games (OWASP &amp; MITRE ATLAS)</h2>
+        <p class="muted" style="font-size:13px">How many pages the mapping games run
+          (1–12) — applies to both “Name That Risk” (OWASP) and “Map it to MITRE ATLAS”.
+          Each page rotates through a different taxonomy / ATLAS tactic.</p>
+        <div class="row" style="align-items:center;gap:10px">
+          <input id="quizPages" type="number" min="1" max="12" style="width:90px" />
+          <button id="saveQuiz">Save page count</button>
+        </div>
         <h2 style="margin-top:18px">Leaderboard windows</h2>
         <div class="row">
           <button id="newDay">Start new day</button>
@@ -81,6 +89,7 @@
       document.getElementById("who").textContent = data.user;
       document.getElementById("eventName").value = data.event_name || "";
       setHintModeUI(data.hint_mode || "beginner");
+      document.getElementById("quizPages").value = data.quiz_pages || 3;
     }
     function setHintModeUI(mode) {
       const adv = mode === "advanced";
@@ -152,6 +161,20 @@
         e.target.checked = !e.target.checked; // revert on failure
         res.innerHTML = `<div class="banner bad">${esc(err.message)}</div>`;
       }
+    };
+    document.getElementById("saveQuiz").onclick = async () => {
+      const pages = Number(document.getElementById("quizPages").value || 3);
+      const res = document.getElementById("res");
+      try {
+        const r = await authed("/api/admin/quiz-pages", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pages }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "Failed");
+        document.getElementById("quizPages").value = d.quiz_pages;
+        res.innerHTML = `<div class="banner good">${esc(d.message)}</div>`;
+      } catch (e) { res.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; }
     };
     document.getElementById("newDay").onclick = () => action("/api/leaderboard/new-day");
     document.getElementById("newEvent").onclick = () =>
