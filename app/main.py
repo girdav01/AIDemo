@@ -660,7 +660,7 @@ def _companion_summary(pid: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Challenge 9 — Name That Risk (map a situation to the right OWASP Top-10 entry)
+# Challenges 9 & 10 — mapping games (OWASP Top-10 and MITRE ATLAS)
 # --------------------------------------------------------------------------- #
 def _quiz_pages() -> int:
     try:
@@ -669,23 +669,16 @@ def _quiz_pages() -> int:
         return 3
 
 
-@app.get("/api/challenges/map-the-risk/quiz")
-def map_the_risk_quiz():
-    """Build a fresh drag-and-drop quiz. Number of pages is set by staff in /admin
-    (quiz_pages). Answers are graded server-side and never sent to the client."""
-    return quiz.build_quiz(_quiz_pages())
-
-
-@app.post("/api/challenges/map-the-risk/answer")
-def map_the_risk_answer(body: QuizAnswerBody):
-    """Grade a page of matches (+3 correct, -1 wrong) and bank the net delta."""
+def _grade_and_award(challenge_id: str, body: QuizAnswerBody):
+    """Shared grading for the mapping games: +3 correct / -1 wrong, banked as the
+    net delta to the leaderboard ledger."""
     _require(body.player_id)
     graded = quiz.grade(body.answers)
-    p = store.award(body.player_id, "map-the-risk", extra=graded["delta"])
+    p = store.award(body.player_id, challenge_id, extra=graded["delta"])
     if graded["results"]:
         store.add_event(
-            "map-the-risk", "info",
-            f"Mapped {graded['correct_count']} risk(s) correctly, "
+            challenge_id, "info",
+            f"Mapped {graded['correct_count']} correctly, "
             f"{graded['wrong_count']} wrong ({graded['delta']:+d} pts).",
         )
     return {
@@ -696,6 +689,29 @@ def map_the_risk_answer(body: QuizAnswerBody):
             "stamps": len(p["stamps"]), "completed": p["completed"],
         },
     }
+
+
+@app.get("/api/challenges/map-the-risk/quiz")
+def map_the_risk_quiz():
+    """OWASP mapping quiz. Pages set by staff in /admin (quiz_pages). Answers are
+    graded server-side and never sent to the client."""
+    return quiz.build_quiz("map-the-risk", _quiz_pages())
+
+
+@app.post("/api/challenges/map-the-risk/answer")
+def map_the_risk_answer(body: QuizAnswerBody):
+    return _grade_and_award("map-the-risk", body)
+
+
+@app.get("/api/challenges/map-atlas/quiz")
+def map_atlas_quiz():
+    """MITRE ATLAS mapping quiz (situations → ATLAS techniques, grouped by tactic)."""
+    return quiz.build_quiz("map-atlas", _quiz_pages())
+
+
+@app.post("/api/challenges/map-atlas/answer")
+def map_atlas_answer(body: QuizAnswerBody):
+    return _grade_and_award("map-atlas", body)
 
 
 # --------------------------------------------------------------------------- #

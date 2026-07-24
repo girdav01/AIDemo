@@ -1,22 +1,23 @@
-"""Challenge 9 — "Name That Risk": map an AI-security situation to the correct
-OWASP Top-10 entry.
+"""Mapping games — drag a situation onto the framework entry it belongs to.
 
-Four OWASP taxonomies are used as the answer space (situations and their answers
-are grounded in the published OWASP documentation):
+Two games share this engine:
 
-  * OWASP Top 10 for LLM Applications (2025)        — LLM01..LLM10
-  * OWASP Top 10 for Agentic Applications (2026)    — ASI01..ASI10
-  * OWASP MCP Top 10 (2025)                         — MCP01..MCP10
-  * OWASP Agentic Skills Top 10 (2026)              — AST01..AST10
+  * ``map-the-risk`` — OWASP Top-10 taxonomies:
+      - OWASP Top 10 for LLM Applications (2025)      LLM01..LLM10
+      - OWASP Top 10 for Agentic Applications (2026)  ASI01..ASI10
+      - OWASP MCP Top 10 (2025)                       MCP01..MCP10
+      - OWASP Agentic Skills Top 10 (2026)            AST01..AST10
+  * ``map-atlas`` — MITRE ATLAS (Adversarial Threat Landscape for AI Systems):
+      situations are mapped to ATLAS techniques, grouped by tactic.
 
-Each quiz page draws situations from ONE taxonomy and offers that taxonomy's risk
-codes as drag-and-drop targets, plus a couple of extra distractors so there are
-more options on the right than situations on the left. Scoring: +3 for a correct
-match, -1 for a wrong one (configurable constants below).
+Every quiz page draws situations from ONE group (a taxonomy or an ATLAS tactic)
+and offers that group's codes as drag-and-drop targets, plus a couple of extra
+distractors so there are more options on the right than situations on the left.
+Each group carries a ``reference`` URL (opened from a 📖 book link in the UI).
 
-Grading is stateless: every situation has a stable id whose correct code lives in
-this bank, so the client never receives the answers and the server needs no
-per-quiz session.
+Scoring: +3 for a correct match, -1 for a wrong one. Grading is stateless — every
+situation has a stable, globally-unique id whose correct code lives in this bank,
+so the client never receives the answers and no per-quiz session is needed.
 """
 
 import random
@@ -29,14 +30,14 @@ SITUATIONS_PER_PAGE = 4   # situations shown on the left of each page
 DISTRACTORS = 2           # extra wrong options added on the right (more than left)
 
 # --------------------------------------------------------------------------- #
-# The four taxonomies. `catalog` is the full code->name map (right-side options
-# + distractor pool). `situations` are (id, text, correct_code), one per code.
+# Game 1 — OWASP Top-10 taxonomies
 # --------------------------------------------------------------------------- #
-TAXONOMIES: List[Dict] = [
+OWASP_GROUPS: List[Dict] = [
     {
         "key": "llm",
         "label": "OWASP Top 10 for LLM Applications (2025)",
         "theme": "blue",
+        "reference": "https://genai.owasp.org/llm-top-10/",
         "catalog": {
             "LLM01": "Prompt Injection",
             "LLM02": "Sensitive Information Disclosure",
@@ -77,6 +78,7 @@ TAXONOMIES: List[Dict] = [
         "key": "agentic",
         "label": "OWASP Top 10 for Agentic Applications (2026)",
         "theme": "red",
+        "reference": "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/",
         "catalog": {
             "ASI01": "Agent Goal Hijack",
             "ASI02": "Tool Misuse & Exploitation",
@@ -117,6 +119,7 @@ TAXONOMIES: List[Dict] = [
         "key": "mcp",
         "label": "OWASP MCP Top 10 (2025)",
         "theme": "purple",
+        "reference": "https://owasp.org/www-project-mcp-top-10/",
         "catalog": {
             "MCP01": "Token Mismanagement & Secret Exposure",
             "MCP02": "Privilege Escalation via Scope Creep",
@@ -156,6 +159,7 @@ TAXONOMIES: List[Dict] = [
         "key": "skills",
         "label": "OWASP Agentic Skills Top 10 (2026)",
         "theme": "orange",
+        "reference": "https://owasp.org/www-project-agentic-skills-top-10/",
         "catalog": {
             "AST01": "Malicious Skills",
             "AST02": "Supply Chain Compromise",
@@ -193,45 +197,160 @@ TAXONOMIES: List[Dict] = [
     },
 ]
 
-TAX_BY_KEY = {t["key"]: t for t in TAXONOMIES}
-# situation id -> (taxonomy_key, correct_code)
+# --------------------------------------------------------------------------- #
+# Game 2 — MITRE ATLAS (grouped by tactic; answers are ATLAS techniques)
+# --------------------------------------------------------------------------- #
+ATLAS_GROUPS: List[Dict] = [
+    {
+        "key": "atlas-ia",
+        "label": "MITRE ATLAS · Initial Access (AML.TA0004)",
+        "theme": "teal",
+        "reference": "https://atlas.mitre.org/tactics/AML.TA0004",
+        "catalog": {
+            "AML.T0051": "LLM Prompt Injection",
+            "AML.T0010": "ML Supply Chain Compromise",
+            "AML.T0049": "Exploit Public-Facing Application",
+            "AML.T0012": "Valid Accounts",
+            "AML.T0052": "Phishing",
+            "AML.T0053": "LLM Plugin Compromise",
+        },
+        "situations": [
+            ("atlas-ia-01", "Hidden instructions inside a retrieved web page steer the LLM assistant "
+                            "into acting for the attacker.", "AML.T0051"),
+            ("atlas-ia-02", "A team pulls a tampered pre-trained model from a public hub, giving the "
+                            "attacker a foothold in the pipeline.", "AML.T0010"),
+            ("atlas-ia-03", "An attacker exploits a vulnerability in the public model-serving web API "
+                            "to gain access.", "AML.T0049"),
+            ("atlas-ia-04", "An attacker reuses stolen, legitimate credentials to log into the ML "
+                            "platform.", "AML.T0012"),
+            ("atlas-ia-05", "A spear-phishing email lures an ML engineer into running a malicious "
+                            "notebook.", "AML.T0052"),
+        ],
+    },
+    {
+        "key": "atlas-stage",
+        "label": "MITRE ATLAS · ML Attack Staging (AML.TA0001)",
+        "theme": "purple",
+        "reference": "https://atlas.mitre.org/tactics/AML.TA0001",
+        "catalog": {
+            "AML.T0043": "Craft Adversarial Data",
+            "AML.T0005": "Create Proxy ML Model",
+            "AML.T0018": "Backdoor ML Model",
+            "AML.T0042": "Verify Attack",
+            "AML.T0020": "Poison Training Data",
+            "AML.T0002": "Acquire Public ML Artifacts",
+        },
+        "situations": [
+            ("atlas-st-01", "An attacker adds imperceptible perturbations to an image so the classifier "
+                            "misreads it.", "AML.T0043"),
+            ("atlas-st-02", "An attacker builds a local surrogate model to craft transferable attacks "
+                            "offline.", "AML.T0005"),
+            ("atlas-st-03", "An attacker implants a hidden trigger so the model misclassifies attacker "
+                            "inputs on command.", "AML.T0018"),
+            ("atlas-st-04", "An attacker privately confirms the adversarial example works before using "
+                            "it in the real attack.", "AML.T0042"),
+        ],
+    },
+    {
+        "key": "atlas-exfil",
+        "label": "MITRE ATLAS · Exfiltration (AML.TA0010)",
+        "theme": "orange",
+        "reference": "https://atlas.mitre.org/tactics/AML.TA0010",
+        "catalog": {
+            "AML.T0024": "Exfiltration via ML Inference API",
+            "AML.T0025": "Exfiltration via Cyber Means",
+            "AML.T0057": "LLM Data Leakage",
+            "AML.T0056": "Extract LLM System Prompt",
+            "AML.T0015": "Evade ML Model",
+            "AML.T0031": "Erode ML Model Integrity",
+        },
+        "situations": [
+            ("atlas-ex-01", "An attacker repeatedly queries the prediction API to reconstruct the "
+                            "model's training data.", "AML.T0024"),
+            ("atlas-ex-02", "An attacker copies the model's weight files out over the network using "
+                            "ordinary file-transfer tooling.", "AML.T0025"),
+            ("atlas-ex-03", "The chatbot reveals sensitive data from its context and training in its "
+                            "responses.", "AML.T0057"),
+            ("atlas-ex-04", "An attacker coaxes the LLM into printing its hidden system prompt.", "AML.T0056"),
+        ],
+    },
+    {
+        "key": "atlas-impact",
+        "label": "MITRE ATLAS · Impact (AML.TA0011)",
+        "theme": "red",
+        "reference": "https://atlas.mitre.org/tactics/AML.TA0011",
+        "catalog": {
+            "AML.T0029": "Denial of ML Service",
+            "AML.T0031": "Erode ML Model Integrity",
+            "AML.T0034": "Cost Harvesting",
+            "AML.T0048": "External Harms",
+            "AML.T0046": "Spamming ML System with Chaff Data",
+            "AML.T0024": "Exfiltration via ML Inference API",
+        },
+        "situations": [
+            ("atlas-im-01", "An attacker floods the model with expensive requests so it can no longer "
+                            "serve legitimate users.", "AML.T0029"),
+            ("atlas-im-02", "An attacker steadily degrades the model's accuracy so users lose trust in "
+                            "its outputs.", "AML.T0031"),
+            ("atlas-im-03", "An attacker sends costly queries to run up the victim's cloud inference "
+                            "bill.", "AML.T0034"),
+            ("atlas-im-04", "A manipulated model causes real-world financial and reputational damage "
+                            "downstream.", "AML.T0048"),
+        ],
+    },
+]
+
+GAMES: Dict[str, Dict] = {
+    "map-the-risk": {"framework": "OWASP Top 10", "groups": OWASP_GROUPS},
+    "map-atlas": {"framework": "MITRE ATLAS", "groups": ATLAS_GROUPS},
+}
+
+# situation id -> correct code, and situation id -> owning group (for names)
 SITUATION_ANSWER: Dict[str, str] = {}
-_SIT_TAX: Dict[str, str] = {}
-for _t in TAXONOMIES:
-    for _sid, _text, _code in _t["situations"]:
-        SITUATION_ANSWER[_sid] = _code
-        _SIT_TAX[_sid] = _t["key"]
+GROUP_BY_SIT: Dict[str, Dict] = {}
+for _game in GAMES.values():
+    for _g in _game["groups"]:
+        for _sid, _text, _code in _g["situations"]:
+            SITUATION_ANSWER[_sid] = _code
+            GROUP_BY_SIT[_sid] = _g
 
 
 def _rng(seed: Optional[int]) -> random.Random:
     return random.Random(seed)
 
 
-def build_quiz(pages: int, seed: Optional[int] = None) -> Dict:
-    """Assemble `pages` pages. Each page rotates through the four taxonomies and
-    presents SITUATIONS_PER_PAGE situations with distinct correct codes, plus
-    DISTRACTORS extra options. Answers are NOT included in the payload."""
+def build_quiz(game_key: str, pages: int, seed: Optional[int] = None) -> Dict:
+    """Assemble `pages` pages for a game. Each page rotates through that game's
+    groups and presents up to SITUATIONS_PER_PAGE situations with distinct correct
+    codes, plus distractors. Answers are NOT included in the payload."""
+    game = GAMES.get(game_key)
+    if game is None:
+        raise KeyError(game_key)
+    groups = game["groups"]
     pages = max(1, min(int(pages), 12))
     rng = _rng(seed)
     out_pages = []
     for i in range(pages):
-        tax = TAXONOMIES[i % len(TAXONOMIES)]
-        sits = list(tax["situations"])
+        grp = groups[i % len(groups)]
+        sits = list(grp["situations"])
         rng.shuffle(sits)
         chosen = sits[:SITUATIONS_PER_PAGE]
         correct_codes = [c for (_id, _t, c) in chosen]
-        # Distractors: other codes from the same taxonomy not already correct here.
-        pool = [c for c in tax["catalog"] if c not in correct_codes]
+        pool = [c for c in grp["catalog"] if c not in correct_codes]
         rng.shuffle(pool)
         option_codes = correct_codes + pool[:DISTRACTORS]
         rng.shuffle(option_codes)
         out_pages.append({
             "index": i,
-            "taxonomy": {"key": tax["key"], "label": tax["label"], "theme": tax["theme"]},
+            "taxonomy": {
+                "key": grp["key"], "label": grp["label"],
+                "theme": grp["theme"], "reference": grp["reference"],
+            },
             "situations": [{"id": sid, "text": text} for (sid, text, _c) in chosen],
-            "options": [{"code": c, "name": tax["catalog"][c]} for c in option_codes],
+            "options": [{"code": c, "name": grp["catalog"][c]} for c in option_codes],
         })
     return {
+        "framework": game["framework"],
         "total_pages": pages,
         "scoring": {"correct": POINTS_CORRECT, "wrong": POINTS_WRONG},
         "pages": out_pages,
@@ -251,17 +370,18 @@ def grade(answers: Dict[str, str]) -> Dict:
         chosen = (chosen or "").strip().upper()
         if not chosen:
             continue
-        is_correct = chosen == answer
+        is_correct = chosen == answer.upper()
         if is_correct:
             correct += 1
         else:
             wrong += 1
-        tax = TAX_BY_KEY[_SIT_TAX[sid]]
+        grp = GROUP_BY_SIT[sid]
         results.append({
             "situation_id": sid,
             "chosen": chosen,
             "correct_code": answer,
-            "correct_name": tax["catalog"][answer],
+            "correct_name": grp["catalog"][answer],
+            "reference": grp["reference"],
             "is_correct": is_correct,
         })
     delta = correct * POINTS_CORRECT + wrong * POINTS_WRONG

@@ -17,13 +17,13 @@ def _player(name="Tester"):
 
 
 def test_meta_and_challenges():
-    assert client.get("/api/meta").json()["challenge_count"] == 9
+    assert client.get("/api/meta").json()["challenge_count"] == 10
     chs = client.get("/api/challenges").json()["challenges"]
-    assert len(chs) == 9
+    assert len(chs) == 10
     # every challenge carries a layer
     assert all(c.get("layer") for c in chs)
     ids = {c["id"] for c in chs}
-    assert {"trace-the-poison", "watch-mcp-wire", "map-the-risk"} <= ids
+    assert {"trace-the-poison", "watch-mcp-wire", "map-the-risk", "map-atlas"} <= ids
 
 
 def test_break_the_bot_block_clears_and_logs():
@@ -311,6 +311,35 @@ def test_map_the_risk_scoring_correct_and_wrong():
                      json={"player_id": pid, "answers": {one: bad_code, "does-not-exist": "ZZZ"}}).json()
     assert r2["wrong_count"] == 1 and r2["correct_count"] == 0
     assert r2["delta"] == -1
+
+
+def test_map_atlas_quiz_and_scoring():
+    from app import quiz as qz
+    store.set_setting("quiz_pages", "4")
+    q = client.get("/api/challenges/map-atlas/quiz").json()
+    assert q["framework"] == "MITRE ATLAS"
+    assert len(q["pages"]) == 4
+    for pg in q["pages"]:
+        assert len(pg["options"]) > len(pg["situations"])
+        assert pg["taxonomy"]["reference"].startswith("https://atlas.mitre.org/")
+        assert "ATLAS" in pg["taxonomy"]["label"]
+    # score an ATLAS answer using the shared server-side key
+    pid = _player()
+    atlas_ids = [sid for sid in qz.SITUATION_ANSWER if sid.startswith("atlas-")]
+    good = {sid: qz.SITUATION_ANSWER[sid] for sid in atlas_ids}
+    r = client.post("/api/challenges/map-atlas/answer",
+                    json={"player_id": pid, "answers": good}).json()
+    assert r["wrong_count"] == 0 and r["correct_count"] == len(atlas_ids)
+    assert r["delta"] == 3 * len(atlas_ids)
+    # the reveal carries a reference link for the correct technique
+    assert all(res["reference"].startswith("https://atlas.mitre.org/") for res in r["results"])
+
+
+def test_owasp_quiz_pages_carry_reference():
+    q = client.get("/api/challenges/map-the-risk/quiz").json()
+    assert q["framework"] == "OWASP Top 10"
+    for pg in q["pages"]:
+        assert pg["taxonomy"]["reference"].startswith("http")
 
 
 def test_admin_can_set_quiz_pages():

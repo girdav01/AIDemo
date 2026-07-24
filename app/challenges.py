@@ -136,6 +136,20 @@ CHALLENGES: List[Dict] = [
         "adv_hint": "Each page uses ONE taxonomy (shown at the top). Match the "
                     "situation's core failure to the risk whose name describes it.",
     },
+    {
+        "id": "map-atlas",
+        "number": 10,
+        "name": "Map it to MITRE ATLAS",
+        "tier": "Builder",
+        "layer": "Capstone",
+        "capability": "MITRE ATLAS",
+        "owasp": "AI adversary tactics & techniques",
+        "mission": "Map each AI attack to the right MITRE ATLAS technique.",
+        "clears_when": "You drag attacks onto the correct ATLAS techniques (+3 right, −1 wrong).",
+        "starters": [],
+        "adv_hint": "Each page is one ATLAS tactic (shown at the top). Match the "
+                    "attack to the technique whose name describes what the adversary did.",
+    },
 ]
 
 CHALLENGES_BY_ID = {c["id"]: c for c in CHALLENGES}

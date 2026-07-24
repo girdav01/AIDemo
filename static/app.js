@@ -204,7 +204,8 @@ function openPanel(c) {
     "tame-the-agent": renderTameTheAgent,
     "watch-mcp-wire": renderWatchMcpWire,
     "boss-level": renderBossLevel,
-    "map-the-risk": renderMapTheRisk,
+    "map-the-risk": () => renderMappingGame("map-the-risk"),
+    "map-atlas": () => renderMappingGame("map-atlas"),
   })[c.id]();
 }
 
@@ -543,23 +544,30 @@ function startBossTimer(remaining) {
   bossTimer = setInterval(() => { rem -= 1; if (rem <= 0) { rem = 0; clearInterval(bossTimer); } paint(); }, 1000);
 }
 
-// ---------- 9. Name That Risk (OWASP drag-and-drop mapping) ----------
-const quizState = { quiz: null, page: 0, picks: {}, selected: null, score: 0, graded: {} };
+// ---------- 9 & 10. Mapping games (OWASP / MITRE ATLAS drag-and-drop) ----------
+const quizState = { base: null, quiz: null, page: 0, picks: {}, selected: null, score: 0 };
 
-async function renderMapTheRisk() {
+async function renderMappingGame(challengeId) {
+  const base = "/api/challenges/" + challengeId;
   const body = $("#panelBody");
-  body.innerHTML = `<p class="muted">Loading OWASP situations…</p>`;
-  const quiz = await api("/api/challenges/map-the-risk/quiz");
-  quizState.quiz = quiz; quizState.page = 0; quizState.picks = {};
-  quizState.selected = null; quizState.score = 0; quizState.graded = {};
+  body.innerHTML = `<p class="muted">Loading situations…</p>`;
+  const quiz = await api(base + "/quiz");
+  quizState.base = base; quizState.quiz = quiz; quizState.page = 0;
+  quizState.picks = {}; quizState.selected = null; quizState.score = 0;
   const sc = quiz.scoring;
+  const noun = quiz.framework === "MITRE ATLAS" ? "ATLAS technique" : "OWASP Top-10 risk";
+  const nounP = quiz.framework === "MITRE ATLAS" ? "techniques" : "risks";
   body.innerHTML = `
-    <p class="muted">Match each AI-security situation to the correct OWASP Top-10 risk.
-      Drag a risk onto a situation — or tap a risk, then tap a situation.
-      <b>+${sc.correct}</b> per correct match, <b>${sc.wrong}</b> per wrong one.
-      There are more risks than situations, so watch for distractors.</p>
+    <p class="muted">Match each situation to the correct <b>${esc(noun)}</b>
+      (<b>${esc(quiz.framework)}</b>). Drag an entry onto a situation — or tap one, then
+      tap a situation. <b>+${sc.correct}</b> per correct match, <b>${sc.wrong}</b> per wrong one.
+      There are more ${esc(nounP)} than situations, so watch for distractors.</p>
     <div class="row" style="justify-content:space-between;align-items:center">
-      <div id="quizTax" class="pill"></div>
+      <div class="row" style="gap:8px;align-items:center">
+        <div id="quizTax" class="pill"></div>
+        <a id="quizRef" class="quiz-ref" target="_blank" rel="noopener noreferrer"
+           title="Open the official reference in a new tab">📖 reference</a>
+      </div>
       <div class="muted" id="quizProg" style="font-size:12px"></div>
       <div>Score: <b class="pts" id="quizScore" style="color:var(--gold)">0</b></div>
     </div>
@@ -589,6 +597,9 @@ function paintQuizPage() {
   const tax = $("#quizTax");
   tax.textContent = pg.taxonomy.label;
   tax.className = "pill quiz-tax quiz-" + pg.taxonomy.theme;
+  const ref = $("#quizRef");
+  if (pg.taxonomy.reference) { ref.href = pg.taxonomy.reference; ref.style.display = ""; }
+  else ref.style.display = "none";
   quizState.selected = null;
   $("#quizRes").innerHTML = "";
   $("#quizSubmit").classList.remove("hidden");
@@ -662,7 +673,7 @@ async function submitQuizPage() {
   if (!Object.keys(answers).length) { $("#quizRes").innerHTML = banner("bad", "Match at least one situation first."); return; }
   noteAttempt(state.active);
   $("#quizSubmit").disabled = true;
-  const r = await api("/api/challenges/map-the-risk/answer", { player_id: state.pid, answers });
+  const r = await api(quizState.base + "/answer", { player_id: state.pid, answers });
   quizState.score += r.delta;
   $("#quizScore").textContent = quizState.score;
   const byId = Object.fromEntries(r.results.map((x) => [x.situation_id, x]));
@@ -672,10 +683,13 @@ async function submitQuizPage() {
     const drop = slot.querySelector(".quiz-drop");
     if (!v) { slot.classList.add("quiz-skip"); return; }
     slot.classList.add(v.is_correct ? "quiz-right" : "quiz-wrong");
+    const bookLink = v.reference
+      ? ` <a class="quiz-ref" href="${esc(v.reference)}" target="_blank" rel="noopener noreferrer" title="Reference">📖</a>`
+      : "";
     drop.innerHTML = v.is_correct
-      ? `<span class="quiz-code">${esc(v.chosen)}</span> ✓ correct`
+      ? `<span class="quiz-code">${esc(v.chosen)}</span> ✓ correct${bookLink}`
       : `<span class="quiz-code">${esc(v.chosen)}</span> ✗ &nbsp;→ answer:
-         <b>${esc(v.correct_code)} ${esc(v.correct_name)}</b>`;
+         <b>${esc(v.correct_code)} ${esc(v.correct_name)}</b>${bookLink}`;
   });
   document.querySelectorAll("#quizOptions .quiz-opt").forEach((c) => { c.draggable = false; c.classList.add("locked"); });
   $("#quizSubmit").classList.add("hidden");
